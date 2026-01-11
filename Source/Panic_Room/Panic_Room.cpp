@@ -4,5 +4,4 @@
 #include "Modules/ModuleManager.h"
 
 IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, Panic_Room, "Panic_Room" );
-
-DEFINE_LOG_CATEGORY(LogPanic_Room)
+ 

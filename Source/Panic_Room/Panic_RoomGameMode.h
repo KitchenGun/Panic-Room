@@ -6,10 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "Panic_RoomGameMode.generated.h"
 
-/**
- *  Simple GameMode for a first person game
- */
-UCLASS(abstract)
+UCLASS(minimalapi)
 class APanic_RoomGameMode : public AGameModeBase
 {
 	GENERATED_BODY()

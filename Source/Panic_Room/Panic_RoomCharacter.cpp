@@ -1,47 +1,56 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Panic_RoomCharacter.h"
+#include "Panic_RoomProjectile.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Panic_Room.h"
+#include "Engine/LocalPlayer.h"
+
+DEFINE_LOG_CATEGORY(LogTemplateCharacter);
+
+//////////////////////////////////////////////////////////////////////////
+// APanic_RoomCharacter
 
 APanic_RoomCharacter::APanic_RoomCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
-	
-	// Create the first person mesh that will be viewed only by this character's owner
-	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("First Person Mesh"));
-
-	FirstPersonMesh->SetupAttachment(GetMesh());
-	FirstPersonMesh->SetOnlyOwnerSee(true);
-	FirstPersonMesh->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
-	FirstPersonMesh->SetCollisionProfileName(FName("NoCollision"));
-
-	// Create the Camera Component	
-	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("First Person Camera"));
-	FirstPersonCameraComponent->SetupAttachment(FirstPersonMesh, FName("head"));
-	FirstPersonCameraComponent->SetRelativeLocationAndRotation(FVector(-2.8f, 5.89f, 0.0f), FRotator(0.0f, 90.0f, -90.0f));
+		
+	// Create a CameraComponent	
+	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
+	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
+	FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 60.f)); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
-	FirstPersonCameraComponent->bEnableFirstPersonFieldOfView = true;
-	FirstPersonCameraComponent->bEnableFirstPersonScale = true;
-	FirstPersonCameraComponent->FirstPersonFieldOfView = 70.0f;
-	FirstPersonCameraComponent->FirstPersonScale = 0.6f;
 
-	// configure the character comps
-	GetMesh()->SetOwnerNoSee(true);
-	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
+	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
+	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
+	Mesh1P->SetOnlyOwnerSee(true);
+	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
+	Mesh1P->bCastDynamicShadow = false;
+	Mesh1P->CastShadow = false;
+	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
 
-	GetCapsuleComponent()->SetCapsuleSize(34.0f, 96.0f);
+}
 
-	// Configure character movement
-	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
-	GetCharacterMovement()->AirControl = 0.5f;
+//////////////////////////////////////////////////////////////////////////// Input
+
+void APanic_RoomCharacter::NotifyControllerChanged()
+{
+	Super::NotifyControllerChanged();
+
+	// Add Input Mapping Context
+	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		}
+	}
 }
 
 void APanic_RoomCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -50,71 +59,44 @@ void APanic_RoomCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &APanic_RoomCharacter::DoJumpStart);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &APanic_RoomCharacter::DoJumpEnd);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APanic_RoomCharacter::MoveInput);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APanic_RoomCharacter::Move);
 
-		// Looking/Aiming
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APanic_RoomCharacter::LookInput);
-		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &APanic_RoomCharacter::LookInput);
+		// Looking
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APanic_RoomCharacter::Look);
 	}
 	else
 	{
-		UE_LOG(LogPanic_Room, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
 }
 
 
-void APanic_RoomCharacter::MoveInput(const FInputActionValue& Value)
+void APanic_RoomCharacter::Move(const FInputActionValue& Value)
 {
-	// get the Vector2D move axis
+	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
-	// pass the axis values to the move input
-	DoMove(MovementVector.X, MovementVector.Y);
-
+	if (Controller != nullptr)
+	{
+		// add movement 
+		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
+		AddMovementInput(GetActorRightVector(), MovementVector.X);
+	}
 }
 
-void APanic_RoomCharacter::LookInput(const FInputActionValue& Value)
+void APanic_RoomCharacter::Look(const FInputActionValue& Value)
 {
-	// get the Vector2D look axis
+	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	// pass the axis values to the aim input
-	DoAim(LookAxisVector.X, LookAxisVector.Y);
-
-}
-
-void APanic_RoomCharacter::DoAim(float Yaw, float Pitch)
-{
-	if (GetController())
+	if (Controller != nullptr)
 	{
-		// pass the rotation inputs
-		AddControllerYawInput(Yaw);
-		AddControllerPitchInput(Pitch);
+		// add yaw and pitch input to controller
+		AddControllerYawInput(LookAxisVector.X);
+		AddControllerPitchInput(LookAxisVector.Y);
 	}
-}
-
-void APanic_RoomCharacter::DoMove(float Right, float Forward)
-{
-	if (GetController())
-	{
-		// pass the move inputs
-		AddMovementInput(GetActorRightVector(), Right);
-		AddMovementInput(GetActorForwardVector(), Forward);
-	}
-}
-
-void APanic_RoomCharacter::DoJumpStart()
-{
-	// pass Jump to the character
-	Jump();
-}
-
-void APanic_RoomCharacter::DoJumpEnd()
-{
-	// pass StopJumping to the character
-	StopJumping();
 }
