@@ -4,10 +4,14 @@ using UnrealBuildTool;
 
 public class Panic_Room : ModuleRules
 {
-	public Panic_Room(ReadOnlyTargetRules Target) : base(Target)
-	{
-		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+    public Panic_Room(ReadOnlyTargetRules Target) : base(Target)
+    {
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
-	}
+        PublicDependencyModuleNames.AddRange(new string[]
+        { 
+            "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",
+            "OnlineSubsystem","OnlineSubsystemSteam", "OnlineSubsystemUtils"
+        });
+    }
 }
