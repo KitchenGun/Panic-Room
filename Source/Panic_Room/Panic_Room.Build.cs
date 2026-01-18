@@ -11,7 +11,10 @@ public class Panic_Room : ModuleRules
         PublicDependencyModuleNames.AddRange(new string[]
         { 
             "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",
-            "OnlineSubsystem","OnlineSubsystemSteam", "OnlineSubsystemUtils"
+            "OnlineSubsystem","OnlineSubsystemSteam", "OnlineSubsystemUtils",
+            "UMG", "Slate", "SlateCore"
         });
+
+        PrivateDependencyModuleNames.AddRange(new string[] { });
     }
 }
