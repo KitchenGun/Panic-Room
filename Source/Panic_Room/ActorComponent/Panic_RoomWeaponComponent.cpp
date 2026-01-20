@@ -2,8 +2,8 @@
 
 
 #include "Panic_RoomWeaponComponent.h"
-#include "Panic_RoomCharacter.h"
-#include "Panic_RoomProjectile.h"
+#include "../Character/Panic_RoomCharacter.h"
+#include "../Panic_RoomProjectile.h"
 #include "GameFramework/PlayerController.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Kismet/GameplayStatics.h"

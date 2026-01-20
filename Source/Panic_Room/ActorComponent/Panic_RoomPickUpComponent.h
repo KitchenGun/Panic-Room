@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/SphereComponent.h"
-#include "Panic_RoomCharacter.h"
+#include "../Character/Panic_RoomCharacter.h"
 #include "Panic_RoomPickUpComponent.generated.h"
 
 // Declaration of the delegate that will be called when someone picks this up
