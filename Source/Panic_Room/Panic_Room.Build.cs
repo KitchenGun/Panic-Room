@@ -11,8 +11,10 @@ public class Panic_Room : ModuleRules
         PublicDependencyModuleNames.AddRange(new string[]
         { 
             "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",
-            "OnlineSubsystem","OnlineSubsystemSteam", "OnlineSubsystemUtils",
-            "UMG", "Slate", "SlateCore"
+            "OnlineSubsystem","OnlineSubsystemSteam", "OnlineSubsystemUtils",//온라인 서브시스템 관련 모듈
+            "UMG", "Slate", "SlateCore",//UI 관련 모듈
+            "GameplayAbilities", "GameplayTags", "GameplayTasks"//GAS 관련 모듈
+
         });
 
         // Source 폴더 내의 모든 하위 폴더를 인클루드 경로로 잡게 함
