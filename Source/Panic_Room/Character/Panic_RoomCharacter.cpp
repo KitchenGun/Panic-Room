@@ -10,6 +10,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
+#include "BasicPlayerState.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -35,6 +36,13 @@ APanic_RoomCharacter::APanic_RoomCharacter()
 	Mesh1P->CastShadow = false;
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
 
+}
+
+void APanic_RoomCharacter::BeginPlay()
+{
+	// Call the base class  
+	Super::BeginPlay();
+	PlayerState = Cast<ABasicPlayerState>(GetPlayerState());
 }
 
 //////////////////////////////////////////////////////////////////////////// Input

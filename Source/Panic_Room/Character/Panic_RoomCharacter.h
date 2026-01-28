@@ -21,6 +21,7 @@ class APanic_RoomCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
+
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Mesh, meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* Mesh1P;
@@ -48,6 +49,8 @@ class APanic_RoomCharacter : public ACharacter
 public:
 	APanic_RoomCharacter();
 
+	virtual void BeginPlay() override;
+
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -55,7 +58,6 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
-protected:
 	// APawn interface
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
@@ -66,5 +68,8 @@ public:
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+
+protected:
+	TObjectPtr<class ABasicPlayerState> PlayerState;
 };
 
