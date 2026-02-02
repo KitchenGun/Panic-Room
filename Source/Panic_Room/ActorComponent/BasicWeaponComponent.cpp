@@ -8,6 +8,7 @@
 
 void UBasicWeaponComponent::Fire()
 {
+
 	Super::Fire();
 	if (Character == nullptr || Character->GetController() == nullptr)
 	{

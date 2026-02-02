@@ -11,6 +11,9 @@
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
 #include "BasicPlayerState.h"
+//GAS
+#include "AbilitySystemComponent.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -80,6 +83,19 @@ void APanic_RoomCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+}
+
+void APanic_RoomCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	PlayerState = Cast<ABasicPlayerState>(GetPlayerState());
+
+	if (PlayerState)
+	{
+		PlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(PlayerState, this);
+		UE_LOG(LogTemplateCharacter, Warning, TEXT("PossessedBy AbilityActorInfo Initialized"));
+	}
+	
 }
 
 

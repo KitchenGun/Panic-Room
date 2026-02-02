@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ActorComponent/Panic_RoomWeaponComponent.h"
+#include "GameplayAbilitySpecHandle.h" // GAS วฺต้
 #include "BasicWeaponComponent.generated.h"
 
 /**
