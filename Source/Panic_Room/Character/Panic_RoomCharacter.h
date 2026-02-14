@@ -12,6 +12,7 @@ class USkeletalMeshComponent;
 class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
+class UDA_InputConfig;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -52,11 +53,16 @@ public:
 	virtual void BeginPlay() override;
 
 protected:
+
+	#pragma region Input
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	#pragma endregion Input
+
 
 	// APawn interface
 	virtual void NotifyControllerChanged() override;
@@ -73,6 +79,11 @@ public:
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
 protected:
+	#pragma region Input
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UDA_InputConfig* InputConfigDataAsset;
+	#pragma endregion Input
+
 	TObjectPtr<class ABasicPlayerState> PlayerState;
 };
 

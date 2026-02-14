@@ -2,6 +2,7 @@
 
 
 #include "Framework/DA_InputConfig.h"
+#include "GameplayTags.h"
 
 UInputAction* UDA_InputConfig::FindNativeInputActionByTag(const FGameplayTag& InputTag)
 {

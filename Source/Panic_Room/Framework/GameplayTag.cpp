@@ -6,9 +6,10 @@
 
 namespace PanicRoomGameplayTags
 {
-	UE_DEFINE_GAMEPLAY_TAG(Weapon_Pistol, "Weapon.Pistol.Fire");
-	UE_DEFINE_GAMEPLAY_TAG(InputTag_Move, "Input.Move");
-	UE_DEFINE_GAMEPLAY_TAG(InputTag_Jump, "Input.Jump");
+    UE_DEFINE_GAMEPLAY_TAG(Weapon_Pistol_Fire, "Weapon.Pistol.Fire");
+    UE_DEFINE_GAMEPLAY_TAG(InputTag_Move, "InputTag.Move");
+    UE_DEFINE_GAMEPLAY_TAG(InputTag_Look, "InputTag.Look");
+    UE_DEFINE_GAMEPLAY_TAG(InputTag_Jump, "InputTag.Jump");
 }
 
 
