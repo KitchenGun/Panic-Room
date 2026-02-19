@@ -79,6 +79,8 @@ void APanic_RoomCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	UPanicRoomInputComponent* InputComp = Cast<UPanicRoomInputComponent>(PlayerInputComponent);
 	
 	InputComp->BindNativeInputAction(InputConfigDataAsset, PanicRoomGameplayTags::InputTag_Look, ETriggerEvent::Triggered, this, &APanic_RoomCharacter::Look);
+	InputComp->BindNativeInputAction(InputConfigDataAsset, PanicRoomGameplayTags::InputTag_Jump, ETriggerEvent::Started, this, &APanic_RoomCharacter::Jump);
+	InputComp->BindNativeInputAction(InputConfigDataAsset, PanicRoomGameplayTags::InputTag_Jump, ETriggerEvent::Completed, this, &APanic_RoomCharacter::StopJumping);
 	InputComp->BindNativeInputAction(InputConfigDataAsset, PanicRoomGameplayTags::InputTag_Move, ETriggerEvent::Triggered, this, &APanic_RoomCharacter::Move);
 }
 
