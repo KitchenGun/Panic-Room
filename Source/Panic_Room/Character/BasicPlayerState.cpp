@@ -7,6 +7,7 @@
 #include "Net/UnrealNetwork.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineIdentityInterface.h"
+#include "Ability/DA_StartUpDataBase.h"
 
 ABasicPlayerState::ABasicPlayerState()
 {
@@ -31,6 +32,14 @@ void ABasicPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ABasicPlayerState, SteamPlayerName);
+}
+
+void ABasicPlayerState::SetGADefault(UAbilitySystemComponent* InASC)
+{
+	if (UDA_StartUpDataBase* LoadedData = StartUpDataBase.LoadSynchronous())
+	{
+		LoadedData->GiveToAbilitySystemComponent(InASC);
+	}
 }
 
 void ABasicPlayerState::BeginPlay()

@@ -11,6 +11,8 @@
  // Steam 이름 변경 시 UI 업데이트 델리게이트 이벤트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSteamNameChanged, const FString&, NewName);
 
+class UDA_StartUpDataBase;
+
 UCLASS()
 class PANIC_ROOM_API ABasicPlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -22,6 +24,9 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	void SetGADefault(UAbilitySystemComponent* ASC);
+
+	//Get ASC Attribute
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
@@ -52,4 +57,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<class UAttributeSet> AttributeSet;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSoftObjectPtr<UDA_StartUpDataBase> StartUpDataBase;
 };

@@ -92,7 +92,7 @@ void APanic_RoomCharacter::PossessedBy(AController* NewController)
 	if (PlayerState)
 	{
 		PlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(PlayerState, this);
-		UE_LOG(LogTemplateCharacter, Warning, TEXT("PossessedBy AbilityActorInfo Initialized"));
+		PlayerState->SetGADefault(PlayerState->GetAbilitySystemComponent());
 	}
 	
 }
