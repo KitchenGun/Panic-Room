@@ -61,13 +61,18 @@ void ABasicPlayerState::FetchSteamPlayerName()
 		IOnlineIdentityPtr IdentityInterface = OnlineSubsystem->GetIdentityInterface();
 		if (IdentityInterface.IsValid())
 		{
-			FString PlayerName = IdentityInterface->GetPlayerNickname(0);
-			if (!PlayerName.IsEmpty())
+			// UniqueNetId로 해당 플레이어 Steam 이름 조회 (0 = Host)
+			TSharedPtr<const FUniqueNetId> PlayerNetId = GetUniqueId().GetUniqueNetId();
+			if (PlayerNetId.IsValid())
 			{
-				SteamPlayerName = PlayerName;
-				OnRep_SteamPlayerName();
-
-				return;
+				FString PlayerName = IdentityInterface->GetPlayerNickname(*PlayerNetId);
+				if (!PlayerName.IsEmpty())
+				{
+					SteamPlayerName = PlayerName;
+					OnRep_SteamPlayerName();
+					
+					return;
+				}
 			}
 		}
 	}
