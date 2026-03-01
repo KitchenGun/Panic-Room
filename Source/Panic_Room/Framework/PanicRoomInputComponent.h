@@ -18,18 +18,18 @@ public:
 	void BindNativeInputAction
 	(
 		UDA_InputConfig* InputConfig,//
-		const FGameplayTag& InputTag,//¹ÙÀÎ action Ã£À» ÅÂ±×
-		ETriggerEvent TriggerEvent,//Æ®¸®°Å ÀÌº¥Æ® Å¸ÀÔ
-		UserObject* ContextObject,//¹ÙÀÎµùÇÒ ¿ÀºêÁ§Æ®
-		CallbackFunc Func //¹ÙÀÎµùÇÒ µ¿ÀÛ ÇÔ¼ö
+		const FGameplayTag& InputTag,//ï¿½ï¿½ï¿½ï¿½ action Ã£ï¿½ï¿½ ï¿½Â±ï¿½
+		ETriggerEvent TriggerEvent,//Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® Å¸ï¿½ï¿½
+		UserObject* ContextObject,//ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+		CallbackFunc Func //ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 	);
 	template<typename UserObject, typename CallbackFunc>
 	void BindAbilityInputAction
 	(
-		UDA_InputConfig* InputConfig,	//action Á¤ÀÇ´ã±ä µ¥ÀÌÅÍ¾î¼Â
-		UserObject* ContextObject,		//¹ÙÀÎµùÇÒ ¿ÀºêÁ§Æ®
-		CallbackFunc InputPressFunc,	//Press ¹ÙÀÎµùÇÒ µ¿ÀÛ ÇÔ¼ö
-		CallbackFunc InputReleaseFunc	//Release ¹ÙÀÎµùÇÒ µ¿ÀÛ ÇÔ¼ö
+		UDA_InputConfig* InputConfig,	//action ï¿½ï¿½ï¿½Ç´ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¾ï¿½ï¿½
+		UserObject* ContextObject,		//ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+		CallbackFunc InputPressFunc,	//Press ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
+		CallbackFunc InputReleaseFunc	//Release ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 	);
 
 
@@ -38,11 +38,11 @@ public:
 template<typename UserObject, typename CallbackFunc>
 inline void UPanicRoomInputComponent::BindNativeInputAction
 (
-	UDA_InputConfig* InputConfig,	//action Á¤ÀÇ´ã±ä µ¥ÀÌÅÍ¾î¼Â
-	const FGameplayTag& InputTag,	//¹ÙÀÎ action Ã£À» ÅÂ±×
-	ETriggerEvent TriggerEvent,		//Æ®¸®°Å ÀÌº¥Æ® Å¸ÀÔ
-	UserObject* ContextObject,		//¹ÙÀÎµùÇÒ ¿ÀºêÁ§Æ®
-	CallbackFunc Func				//¹ÙÀÎµùÇÒ µ¿ÀÛ ÇÔ¼ö
+	UDA_InputConfig* InputConfig,	//action ï¿½ï¿½ï¿½Ç´ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¾ï¿½ï¿½
+	const FGameplayTag& InputTag,	//ï¿½ï¿½ï¿½ï¿½ action Ã£ï¿½ï¿½ ï¿½Â±ï¿½
+	ETriggerEvent TriggerEvent,		//Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® Å¸ï¿½ï¿½
+	UserObject* ContextObject,		//ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+	CallbackFunc Func				//ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 )
 {
 	checkf(InputConfig, TEXT("InputConfig is nullptr"));
@@ -56,10 +56,10 @@ inline void UPanicRoomInputComponent::BindNativeInputAction
 template<typename UserObject, typename CallbackFunc>
 inline void UPanicRoomInputComponent::BindAbilityInputAction
 (
-	UDA_InputConfig* InputConfig,	//action Á¤ÀÇ´ã±ä	µ¥ÀÌÅÍ¾î¼Â
-	UserObject* ContextObject,		//¹ÙÀÎµùÇÒ ¿ÀºêÁ§Æ®
-	CallbackFunc InputPressFunc,	//Press ¹ÙÀÎµùÇÒ µ¿ÀÛ ÇÔ¼ö
-	CallbackFunc InputReleaseFunc	//Release ¹ÙÀÎµùÇÒ µ¿ÀÛ ÇÔ¼ö
+	UDA_InputConfig* InputConfig,	//action ï¿½ï¿½ï¿½Ç´ï¿½ï¿½	ï¿½ï¿½ï¿½ï¿½ï¿½Í¾ï¿½ï¿½
+	UserObject* ContextObject,		//ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+	CallbackFunc InputPressFunc,	//Press ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
+	CallbackFunc InputReleaseFunc	//Release ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 )
 {
 	checkf(InputConfig, TEXT("InputConfig is nullptr"));
@@ -69,7 +69,6 @@ inline void UPanicRoomInputComponent::BindAbilityInputAction
 		{
 			BindAction(AbilityInputActionConfig.InputAction, ETriggerEvent::Started, ContextObject, InputPressFunc,AbilityInputActionConfig.InputTag);
 			BindAction(AbilityInputActionConfig.InputAction, ETriggerEvent::Completed, ContextObject, InputReleaseFunc, AbilityInputActionConfig.InputTag);
-			return;
 		}
 	}
 }
