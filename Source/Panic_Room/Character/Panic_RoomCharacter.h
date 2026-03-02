@@ -46,11 +46,16 @@ class APanic_RoomCharacter : public ACharacter
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UCombatComponent* CombatComponent;
 	
 public:
 	APanic_RoomCharacter();
 
 	virtual void BeginPlay() override;
+
+	FORCEINLINE UCombatComponent* GetCombatComponent() const { return CombatComponent; }
 
 protected:
 

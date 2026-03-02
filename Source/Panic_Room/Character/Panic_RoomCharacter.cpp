@@ -12,6 +12,7 @@
 #include "DA_InputConfig.h"
 #include "GameplayTags.h"
 #include "BasicPlayerState.h"
+#include "CombatComponent.h"
 //GAS
 #include "AbilitySystemComponent.h"
 
@@ -40,6 +41,8 @@ APanic_RoomCharacter::APanic_RoomCharacter()
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
+
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 
 }
 
