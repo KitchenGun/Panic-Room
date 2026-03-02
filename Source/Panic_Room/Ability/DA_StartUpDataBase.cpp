@@ -31,6 +31,7 @@ void UDA_StartUpDataBase::SetAbilities(TArray<TSubclassOf<UGA_Basic>> Abilities,
 		AbilitySpec.Level = ApplyLevel;
 
 		ASC->GiveAbility(AbilitySpec);
+		UE_LOG(LogTemp, Display, TEXT("Given ability: %s"), *Ability->GetName());
 	}
 
 }

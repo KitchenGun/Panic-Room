@@ -25,7 +25,7 @@ ABasicPlayerState::ABasicPlayerState()
 	bReplicates = true;
 
 	// 네트워크 갱신 빈도 설정 (멀티플레이어 최적화)
-	NetUpdateFrequency = 100.0f;
+	SetNetUpdateFrequency(100.0f);
 }
 
 void ABasicPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
