@@ -14,7 +14,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLobbyPlayersUpdated);
  *
  */
 UCLASS()
-class PANIC_ROOM_API ABasicGameState : public AGameStateBase
+class PANIC_ROOM_API ABasicGameState : public AGameState
 {
 	GENERATED_BODY()
 
