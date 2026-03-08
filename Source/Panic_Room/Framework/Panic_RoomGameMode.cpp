@@ -4,6 +4,7 @@
 #include "Panic_RoomCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Character/BasicPlayerState.h"
+#include "Framework/BasicGameState.h"
 
 APanic_RoomGameMode::APanic_RoomGameMode()
 	: Super()
@@ -12,4 +13,5 @@ APanic_RoomGameMode::APanic_RoomGameMode()
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnClassFinder(TEXT("/Game/FirstPerson/Blueprints/BP_FirstPersonCharacter"));
 	DefaultPawnClass = PlayerPawnClassFinder.Class;
 	PlayerStateClass = ABasicPlayerState::StaticClass();
+	GameStateClass = ABasicGameState::StaticClass();
 }

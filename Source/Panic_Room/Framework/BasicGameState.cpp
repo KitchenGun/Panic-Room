@@ -2,6 +2,23 @@
 
 
 #include "Framework/BasicGameState.h"
+#include "Character/BasicPlayerState.h"
+
+TArray<ABasicPlayerState*> ABasicGameState::GetLobbyPlayerStates() const
+{
+	TArray<ABasicPlayerState*> Out;
+	Out.Reserve(PlayerArray.Num());
+
+	for (APlayerState* PS : PlayerArray)
+	{
+		if (ABasicPlayerState* BasicPS = Cast<ABasicPlayerState>(PS))
+		{
+			Out.Add(BasicPS);
+		}
+	}
+
+	return Out;
+}
 
 void ABasicGameState::AddPlayerState(APlayerState* PlayerState)
 {
@@ -12,6 +29,12 @@ void ABasicGameState::AddPlayerState(APlayerState* PlayerState)
 void ABasicGameState::RemovePlayerState(APlayerState* PlayerState)
 {
 	Super::RemovePlayerState(PlayerState);
+	OnLobbyPlayersUpdated.Broadcast();
+}
+
+void ABasicGameState::OnRep_PlayerArray()
+{
+	Super::OnRep_PlayerArray();
 	OnLobbyPlayersUpdated.Broadcast();
 }
 
