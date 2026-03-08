@@ -16,7 +16,7 @@ void UPanicRoomGameInstance::Init()
 {
 	Super::Init();
 
-	// ╟тюсю╩ ╩У╥н ╫ггЮгр ╤╖ ╥╠е╦юс ╩Себ╦╕ цй╠Б ╩Себ╥н ю╞аЖ
+	// Й╡▄Л·└ Л▀╓М√┴ Л▀°Л·▒ Л▀° Л┐│М┐°К╔╪ Л╢┬Й╦╟М≥■
 	bHostLobbyRequested = false;
 	bSessionCreated = false;
 }

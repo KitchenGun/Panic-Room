@@ -8,8 +8,8 @@
 
 /**
  * [26-03-01][JJH]
- * Lobby Host State¸¦ ·¡ÇÎÇÏ´Â ÇÁ·ÎÁ§Æ® Instance
- * 
+ * Lobby Host Stateë¥¼ ê´€ë¦¬í•˜ëŠ” ê²Œì„ì¸ìŠ¤í„´ìŠ¤
+ *
  */
 UCLASS()
 class PANIC_ROOM_API UPanicRoomGameInstance : public UAdvancedFriendsGameInstance
@@ -19,11 +19,11 @@ class PANIC_ROOM_API UPanicRoomGameInstance : public UAdvancedFriendsGameInstanc
 public:
 	UPanicRoomGameInstance(const FObjectInitializer& ObjectInitializer);
 
-	// È£½ºÆ® Èå¸§À» Ç¥½Ã ¹× ·Îºñ ¸ÊÀ» ¸®½¼ ¼­¹ö·Î ¿°.
+	// í˜¸ìŠ¤íŠ¸ ë¡œë¹„ ìš”ì²­ ë° ë¦¬ìŠ¨ ì„œë²„ë¡œ ë ˆë²¨ ì˜¤í”ˆ
 	UFUNCTION(BlueprintCallable, Category = "Lobby")
 	void RequestHostLobbyAndOpenListen();
 
-	// È£½ºÆ®-ÇÃ·Î¿ì ÀüÈ¯ÀÌ º¸·ù ÁßÀÏ ¶§ ÇÑ ¹ø true¸¦ ¹İÈ¯ÇÏ°í, ±× ÈÄ ÇÃ·¡±×¸¦ ÇØÁ¦ÇÕ´Ï´Ù.
+	// í˜¸ìŠ¤íŠ¸ ìš”ì²­ í”Œë˜ê·¸ë¥¼ ì†Œë¹„ (true ë°˜í™˜ í›„ ì¦‰ì‹œ falseë¡œ ì´ˆê¸°í™”)
 	UFUNCTION(BlueprintCallable, Category = "Lobby")
 	bool ConsumeHostLobbyRequested();
 

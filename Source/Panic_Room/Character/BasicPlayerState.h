@@ -7,17 +7,19 @@
 #include "AbilitySystemInterface.h"
 #include "BasicPlayerState.generated.h"
 
-
- // Steam ÀÌ¸§ º¯°æ ½Ã UI ¾÷µ¥ÀÌÆ® µ¨¸®°ÔÀÌÆ® ÀÌº¥Æ®
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSteamNameChanged, const FString&, NewName);
-
 class UDA_StartUpDataBase;
+class UTexture2D;
+
+// Steam ì´ë¦„ ë³€ê²½ ì‹œ UI ì»´í¬ë„ŒíŠ¸ ì—…ë°ì´íŠ¸ ì´ë²¤íŠ¸
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSteamNameChanged, const FString&, NewName);
+// Steam ì•„ë°”íƒ€ ë¡œë“œ ì™„ë£Œ ì´ë²¤íŠ¸
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSteamAvatarLoaded, UTexture2D*, AvatarTexture);
 
 UCLASS()
 class PANIC_ROOM_API ABasicPlayerState : public APlayerState, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-	
+
 public:
 
 	ABasicPlayerState();
@@ -44,13 +46,26 @@ protected:
 	void OnRep_SteamPlayerName();
 
 public:
-	// À¯Àú ÀÌ¸§ º¯°æ ¾÷µ¥ÀÌÆ®¿ë ÀÌº¥Æ®
+	// í˜„ì¬ Steam ì´ë¦„ ë°˜í™˜
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	FString GetSteamPlayerName() const { return SteamPlayerName; }
 
-	// ÇöÀç À¯Àú ÀÌ¸§ ÀúÀåº¯¼ö
+	// ì•„ë°”íƒ€ í…ìŠ¤ì²˜ ìš”ì²­ (ìºì‹±ë¨, ì—¬ëŸ¬ ë²ˆ í˜¸ì¶œí•´ë„ ì•ˆì „)
+	UFUNCTION(BlueprintCallable, Category = "Player")
+	void RequestSteamAvatar();
+
+	// ì´ë¦„ ë³€ê²½ ë¸ë¦¬ê²Œì´íŠ¸
 	UPROPERTY(BlueprintAssignable, Category = "Player")
 	FOnSteamNameChanged OnSteamNameChanged;
+
+	// ì•„ë°”íƒ€ ë¡œë“œ ì™„ë£Œ ë¸ë¦¬ê²Œì´íŠ¸
+	UPROPERTY(BlueprintAssignable, Category = "Player")
+	FOnSteamAvatarLoaded OnSteamAvatarLoaded;
+
+	// ë¡œë“œëœ ì•„ë°”íƒ€ í…ìŠ¤ì²˜ (ë¡œì»¬ ìºì‹œ, ë³µì œ ì•ˆ ë¨)
+	UPROPERTY(BlueprintReadOnly, Category = "Player")
+	TObjectPtr<UTexture2D> CachedAvatarTexture;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<class UAbilitySystemComponent> ASC;
@@ -60,4 +75,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TSoftObjectPtr<UDA_StartUpDataBase> StartUpDataBase;
+
+	// ì•„ë°”íƒ€ ì¬ì‹œë„ íƒ€ì´ë¨¸
+	FTimerHandle AvatarRetryTimerHandle;
 };

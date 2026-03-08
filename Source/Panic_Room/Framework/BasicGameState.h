@@ -9,22 +9,22 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLobbyPlayersUpdated);
 
 /**
- * 
+ *
  */
 UCLASS()
-class PANIC_ROOM_API ABasicGameState : public AGameState
+class PANIC_ROOM_API ABasicGameState : public AGameStateBase
 {
 	GENERATED_BODY()
-	
+
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Lobby")
 	FOnLobbyPlayersUpdated OnLobbyPlayersUpdated;
 
+
 protected:
-	// ¼­¹ö : ÇÃ·¹ÀÌ¾î Ãß°¡ ½Ã È£Ãâ
+	// ë¡œì»¬ : í”Œë ˆì´ì–´ ì¶”ê°€ ì‹œ í˜¸ì¶œ
 	virtual void AddPlayerState(APlayerState* PlayerState) override;
-	// ¼­¹ö : ÇÃ·¹ÀÌ¾î Á¦°Å ½Ã È£Ãâ
+	// ë¡œì»¬ : í”Œë ˆì´ì–´ ì œê±° ì‹œ í˜¸ì¶œ
 	virtual void RemovePlayerState(APlayerState* PlayerState) override;
 
 };
-

@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
+using System.IO;
 
 public class Panic_Room : ModuleRules
 {
@@ -11,20 +12,39 @@ public class Panic_Room : ModuleRules
         PublicDependencyModuleNames.AddRange(new string[]
         {
             "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",
-            "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemUtils",  // ¿Â¶óÀÎ ¼­ºê½Ã½ºÅÛ °ü·Ã ¸ğµâ
+            "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemUtils",  // ì˜¨ë¼ì¸ ì„œë¸Œì‹œìŠ¤í…œ Steam ì˜ì¡´
             "AdvancedSessions",
-            "UMG", "Slate", "SlateCore",        // UI °ü·Ã ¸ğµâ
-            "GameplayAbilities", "GameplayTags", "GameplayTasks"    // GAS °ü·Ã ¸ğµâ
+            "UMG", "Slate", "SlateCore",        // UI ê´€ë ¨ ì˜ì¡´
+            "GameplayAbilities", "GameplayTags", "GameplayTasks",    // GAS ê´€ë ¨ ì˜ì¡´
+
         });
 
         PublicIncludePaths.AddRange(new string[]
         {
-            "Panic_Room",                   // ±âº» ¸ğµâ °æ·Î
-            "Panic_Room/Character",         // Ä³¸¯ÅÍ Æú´õ¸¦ ±âº» include °æ·Î·Î Ãß°¡
+            "Panic_Room",                   // ê¸°ë³¸ ëª¨ë“ˆ ê²½ë¡œ
+            "Panic_Room/Character",         // ìºë¦­í„° ê´€ë ¨ ê¸°ë³¸ include ê²½ë¡œë¡œ ì¶”ê°€
             "Panic_Room/ActorComponent",
             "Panic_Room/Framework"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });
+
+        // Steam SDK í—¤ë” ë° ë¼ì´ë¸ŒëŸ¬ë¦¬ ê²½ë¡œ (ì•„ë°”íƒ€ ì§ì ‘ ì ‘ê·¼ìš©)
+        string SteamworksRoot = Path.Combine(EngineDirectory,
+            "Source", "ThirdParty", "Steamworks");
+        if(Directory.Exists(SteamworksRoot))
+        {
+            string[] SteamDirs = Directory.GetDirectories(SteamworksRoot, "Steamv*");
+            if(SteamDirs.Length > 0)
+            {
+                string SteamSDK = SteamDirs[0];
+                // í—¤ë” ê²½ë¡œ
+                PublicIncludePaths.Add(Path.Combine(SteamSDK, "sdk", "public"));
+                // ë§ì»¤ìš© ë¼ì´ë¸ŒëŸ¬ë¦¬ (steam_api64.lib)
+                PublicAdditionalLibraries.Add(
+                    Path.Combine(SteamSDK, "sdk", "redistributable_bin", "win64", "steam_api64.lib")
+                );
+            }
+        }
     }
 }
