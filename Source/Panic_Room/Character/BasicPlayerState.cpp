@@ -8,25 +8,32 @@
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Ability/DA_StartUpDataBase.h"
+#include "Engine/Texture2D.h"
+
+#if !UE_SERVER
+THIRD_PARTY_INCLUDES_START
+#include "steam/steam_api.h"
+THIRD_PARTY_INCLUDES_END
+#endif
 
 ABasicPlayerState::ABasicPlayerState()
 {
-
-	// ASC »ı¼º
+	// ASC ìƒì„±
 	ASC = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 
-	// ¸ÖÆ¼ÇÃ·¹ÀÌ¾î ÃÖÀûÈ­: PlayerState¿¡ ÀÖÀ» °æ¿ì ¼ÒÀ¯ Å¬¶óÀÌ¾ğÆ®¿¡¸¸ »ó¼¼ ÀÌÆåÆ® Àü´Ş, Å¸ÀÎ¿¡°Õ ÃÖ¼ÒÈ­
+	// ë©€í‹°í”Œë ˆì´ì–´ ìµœì í™”: PlayerStateì— ASCë¥¼ ë‘ì–´ ë¦¬ìŠ¤í° í›„ì—ë„ ìœ ì§€, Mixed ëª¨ë“œë¡œ í´ë¼ì´ì–¸íŠ¸ ì˜ˆì¸¡ í—ˆìš©
 	ASC->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-	// AttributeSet »ı¼º
+	// AttributeSet ìƒì„±
 	AttributeSet = CreateDefaultSubobject<UAttributeSet>(TEXT("AttributeSet"));
 
-	// º¹Á¦ È°¼ºÈ­
+	// ë³µì œ í™œì„±í™”
 	bReplicates = true;
 
-	// ³×Æ®¿öÅ© °»½Å ºóµµ ¼³Á¤ (¸ÖÆ¼ÇÃ·¹ÀÌ¾î ÃÖÀûÈ­)
-	SetNetUpdateFrequency(100.0f);
+	// ë„¤íŠ¸ì›Œí¬ ê°±ì‹  ë¹ˆë„ (ë©€í‹°í”Œë ˆì´ì–´ ìµœì í™”)
+	NetUpdateFrequency = 100.0f;
 }
+
 
 void ABasicPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -46,7 +53,7 @@ void ABasicPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ¼¼¼Ç
+	// ì„œë²„(í˜¸ìŠ¤íŠ¸)ì—ì„œë§Œ Steam ì´ë¦„ ì¡°íšŒ í›„ ë³µì œ
 	if (HasAuthority())
 	{
 		FetchSteamPlayerName();
@@ -61,29 +68,95 @@ void ABasicPlayerState::FetchSteamPlayerName()
 		IOnlineIdentityPtr IdentityInterface = OnlineSubsystem->GetIdentityInterface();
 		if (IdentityInterface.IsValid())
 		{
-			FString PlayerName = IdentityInterface->GetPlayerNickname(0);
-			if (!PlayerName.IsEmpty())
+			// UniqueNetIdë¡œ í•´ë‹¹ í”Œë ˆì´ì–´ì˜ Steam ë‹‰ë„¤ì„ ì¡°íšŒ
+			TSharedPtr<const FUniqueNetId> PlayerNetId = GetUniqueId().GetUniqueNetId();
+			if (PlayerNetId.IsValid())
 			{
-				SteamPlayerName = PlayerName;
-				OnRep_SteamPlayerName();
+				FString PlayerName = IdentityInterface->GetPlayerNickname(*PlayerNetId);
+				if (!PlayerName.IsEmpty())
+				{
+					SteamPlayerName = PlayerName;
+					OnRep_SteamPlayerName();
 
-				return;
+					return;
+				}
 			}
 		}
 	}
 
+	// Steam ì´ë¦„ì„ ê°€ì ¸ì˜¤ì§€ ëª»í•œ ê²½ìš° ì—”ì§„ ê¸°ë³¸ ì´ë¦„ ì‚¬ìš©
 	SteamPlayerName = GetPlayerName();
 	OnRep_SteamPlayerName();
 }
 
-// ¼¼¼Ç °Ë»ö ¿Ï·á ½Ã ¼º°ø ¿©ºÎ ¾Ë¸² ÇÔ¼ö
+// ì´ë¦„ ë³µì œ ì™„ë£Œ ì‹œ ì‹¤í–‰ë˜ëŠ” ì½œë°± (ì„œë²„ì—ì„œëŠ” ìˆ˜ë™ í˜¸ì¶œ)
 void ABasicPlayerState::OnRep_SteamPlayerName()
 {
 	OnSteamNameChanged.Broadcast(SteamPlayerName);
+	RequestSteamAvatar();
 }
 
+void ABasicPlayerState::RequestSteamAvatar()
+{
+	// ì´ë¯¸ ìºì‹œëœ ê²½ìš° ë°”ë¡œ ë¸Œë¡œë“œìºìŠ¤íŠ¸
+	if (CachedAvatarTexture)
+	{
+		OnSteamAvatarLoaded.Broadcast(CachedAvatarTexture);
+		return;
+	}
+
+#if !UE_SERVER
+	TSharedPtr<const FUniqueNetId> NetId = GetUniqueId().GetUniqueNetId();
+	if (!NetId.IsValid()) return;
+
+	// Steam NetIdëŠ” SteamID64 ìˆ«ì ë¬¸ìì—´ë¡œ í‘œí˜„ë¨
+	uint64 SteamID64 = FCString::Strtoui64(*NetId->ToString(), nullptr, 10);
+	if (SteamID64 == 0) return;
+
+	if (!SteamFriends() || !SteamUtils()) return;
+
+	CSteamID SteamUser(SteamID64);
+
+	// Large avatar (184x184) ìš”ì²­; -1ì´ë©´ Steamì´ ì•„ì§ ë¡œë”© ì¤‘
+	int32 AvatarHandle = SteamFriends()->GetLargeFriendAvatar(SteamUser);
+	if (AvatarHandle == -1)
+	{
+		// Steamì— ìœ ì € ì •ë³´ ìš”ì²­ í›„ 1ì´ˆ ë’¤ ì¬ì‹œë„
+		SteamFriends()->RequestUserInformation(SteamUser, false);
+		if (UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().SetTimer(
+				AvatarRetryTimerHandle, this,
+				&ABasicPlayerState::RequestSteamAvatar,
+				1.0f, false
+			);
+		}
+		return;
+	}
+	if (AvatarHandle <= 0) return;
+
+	uint32 Width = 0, Height = 0;
+	if (!SteamUtils()->GetImageSize(AvatarHandle, &Width, &Height) || Width == 0) return;
+
+	TArray<uint8> RGBAData;
+	RGBAData.SetNumUninitialized(Width * Height * 4);
+	if (!SteamUtils()->GetImageRGBA(AvatarHandle, RGBAData.GetData(), RGBAData.Num())) return;
+
+	UTexture2D* NewTexture = UTexture2D::CreateTransient(Width, Height, PF_R8G8B8A8);
+	if (!NewTexture) return;
+
+	FTexture2DMipMap& Mip = NewTexture->GetPlatformData()->Mips[0];
+	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
+	FMemory::Memcpy(Data, RGBAData.GetData(), RGBAData.Num());
+	Mip.BulkData.Unlock();
+	NewTexture->UpdateResource();
+
+	CachedAvatarTexture = NewTexture;
+	OnSteamAvatarLoaded.Broadcast(CachedAvatarTexture);
+#endif
+}
 
 UAbilitySystemComponent* ABasicPlayerState::GetAbilitySystemComponent() const
 {
-    return ASC;
+	return ASC;
 }
