@@ -3,6 +3,9 @@
 #include "Framework/PanicRoomGameInstance.h"
 
 #include "Kismet/GameplayStatics.h"
+#include "OnlineSubsystem.h"
+#include "OnlineSessionSettings.h"
+#include "Interfaces/OnlineSessionInterface.h"
 
 UPanicRoomGameInstance::UPanicRoomGameInstance(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -44,4 +47,38 @@ void UPanicRoomGameInstance::OpenLobbyLevelAsListenServer()
 	}
 
 	UGameplayStatics::OpenLevel(this, LobbyLevelName, true, TEXT("listen"));
+}
+
+void UPanicRoomGameInstance::TravelToJoinedSession(FName SessionName)
+{
+	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
+	if (!OnlineSub)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TravelToJoinedSession: OnlineSubsystem not found."));
+		return;
+	}
+
+	IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+	if (!Sessions.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TravelToJoinedSession: Session interface not valid."));
+		return;
+	}
+
+	FString ConnectString;
+	if (!Sessions->GetResolvedConnectString(SessionName, ConnectString))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TravelToJoinedSession: Failed to get connect string for session '%s'."), *SessionName.ToString());
+		return;
+	}
+
+	APlayerController* PC = GetFirstLocalPlayerController();
+	if (!PC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TravelToJoinedSession: No local PlayerController found."));
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("TravelToJoinedSession: Traveling to %s"), *ConnectString);
+	PC->ClientTravel(ConnectString, TRAVEL_Absolute);
 }

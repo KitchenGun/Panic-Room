@@ -39,6 +39,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lobby")
 	void OpenLobbyLevelAsListenServer();
 
+	// 세선 참가 후 서버 레벨로 클라이언트 이동
+	UFUNCTION(BlueprintCallable, Category = "Session")
+	void TravelToJoinedSession(FName SessionName = TEXT("GameSession"));
+
 protected:
 	virtual void Init() override;
 
