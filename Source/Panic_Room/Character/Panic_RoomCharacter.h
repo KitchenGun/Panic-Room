@@ -31,6 +31,9 @@ class APanic_RoomCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	class UCombatComponent* CombatComponent;
+
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
@@ -47,15 +50,13 @@ class APanic_RoomCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UCombatComponent* CombatComponent;
+	
 	
 public:
 	APanic_RoomCharacter();
 
 	virtual void BeginPlay() override;
 
-	FORCEINLINE UCombatComponent* GetCombatComponent() const { return CombatComponent; }
 
 protected:
 
@@ -74,16 +75,18 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	// End of APawn interface
 
-	//ºùÀÇµÇ¾úÀ» ¶§ È£ÃâµÇ´Â ÇÔ¼ö
+	//ë¹™ì˜ë˜ì—ˆì„ ë•Œ í˜¸ì¶œë˜ëŠ” í•¨ìˆ˜
 	virtual void PossessedBy(AController* NewController) override;
 
 public:
+#pragma region Component
 	/** Returns Mesh1P subobject **/
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
-
-	
+	/** Returns CombatComponent subobject **/
+	FORCEINLINE UCombatComponent* GetCombatComponent() const { return CombatComponent; }
+#pragma endregion Component
 
 protected:
 	#pragma region Input

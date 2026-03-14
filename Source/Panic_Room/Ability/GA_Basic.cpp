@@ -3,6 +3,18 @@
 
 #include "Ability/GA_Basic.h"
 #include "AbilitySystemComponent.h"
+#include "Character/Panic_RoomCharacter.h"
+#include "ActorComponent/CombatComponent.h"
+
+UCombatComponent* UGA_Basic::GetCombatComponentFromActorInfo() const
+{
+	return GetAvatarActorFromActorInfo()->FindComponentByClass<UCombatComponent>();
+}
+
+UAbilitySystemComponent* UGA_Basic::GetASCFromActorInfo() const
+{
+	return GetCurrentActorInfo()->AbilitySystemComponent.Get();
+}
 
 void UGA_Basic::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
@@ -11,7 +23,7 @@ void UGA_Basic::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const 
 	{
 		if (ActorInfo && !Spec.IsActive())
 		{
-			ActorInfo->AbilitySystemComponent->TryActivateAbility(Spec.Handle, false);
+			ActorInfo->AbilitySystemComponent->TryActivateAbility(Spec.Handle);
 		}
 	}
 }

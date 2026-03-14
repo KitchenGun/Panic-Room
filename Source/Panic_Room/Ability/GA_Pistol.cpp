@@ -25,6 +25,5 @@ ABasicPlayerState* UGA_Pistol::GetBasicPlayerStateFromActorInfo() const
 
 UPanic_RoomWeaponComponent* UGA_Pistol::GetPanicRoomWeaponComponentFromActorInfo() const
 {
-	
-	return nullptr;//GetPanicRoomCharacterFromActorInfo()->GetPanicRoomWeaponComponent();
+	return GetAvatarActorFromActorInfo()->FindComponentByClass<UPanic_RoomWeaponComponent>();
 }

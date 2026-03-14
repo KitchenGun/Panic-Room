@@ -6,6 +6,9 @@
 #include "Abilities/GameplayAbility.h"
 #include "GA_Basic.generated.h"
 
+class UCombatComponent;
+class UAbilitySystemComponent;
+
 
 UENUM(BlueprintType)
 enum class EAbilityActivationPolicy : uint8
@@ -30,6 +33,12 @@ protected:
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		bool bReplicateEndAbility,
 		bool bWasCancelled) override;
+	UFUNCTION(BlueprintPure, Category = "PanicRoom|Ability")
+	UCombatComponent* GetCombatComponentFromActorInfo() const;
+
+	UFUNCTION(BlueprintPure, Category = "PanicRoom|Ability")
+	UAbilitySystemComponent* GetASCFromActorInfo() const;
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Ability")
 	EAbilityActivationPolicy ActivationPolicy;
