@@ -85,6 +85,8 @@ void APanic_RoomCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	InputComp->BindNativeInputAction(InputConfigDataAsset, PanicRoomGameplayTags::InputTag_Jump, ETriggerEvent::Started, this, &APanic_RoomCharacter::Jump);
 	InputComp->BindNativeInputAction(InputConfigDataAsset, PanicRoomGameplayTags::InputTag_Jump, ETriggerEvent::Completed, this, &APanic_RoomCharacter::StopJumping);
 	InputComp->BindNativeInputAction(InputConfigDataAsset, PanicRoomGameplayTags::InputTag_Move, ETriggerEvent::Triggered, this, &APanic_RoomCharacter::Move);
+
+	InputComp->BindAbilityInputAction(InputConfigDataAsset, this, &ThisClass::Input_AbilityInputPressed, &ThisClass::Input_AbilityInputReleased);
 }
 
 void APanic_RoomCharacter::PossessedBy(AController* NewController)
@@ -100,6 +102,37 @@ void APanic_RoomCharacter::PossessedBy(AController* NewController)
 	
 }
 
+
+void APanic_RoomCharacter::Input_AbilityInputPressed(FGameplayTag InInputTag)
+{
+	UAbilitySystemComponent* ASC = PlayerState ? PlayerState->GetAbilitySystemComponent() : nullptr;
+	if (!ASC || !InInputTag.IsValid()) return;
+
+	bool bFound = false;
+	for (const FGameplayAbilitySpec& AbilitySpec : ASC->GetActivatableAbilities())
+	{
+		if (!AbilitySpec.DynamicAbilityTags.HasTagExact(InInputTag)) continue;
+		bFound = true;
+		ASC->TryActivateAbility(AbilitySpec.Handle);
+	}
+
+	if (!bFound)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Input] Tag [%s] 에 매핑된 어빌리티 없음 (DynamicAbilityTags 확인 필요)"), *InInputTag.ToString());
+	}
+}
+
+void APanic_RoomCharacter::Input_AbilityInputReleased(FGameplayTag InInputTag)
+{
+	UAbilitySystemComponent* ASC = PlayerState ? PlayerState->GetAbilitySystemComponent() : nullptr;
+	if (!ASC || !InInputTag.IsValid()) return;
+
+	for (const FGameplayAbilitySpec& AbilitySpec : ASC->GetActivatableAbilities())
+	{
+		if (!AbilitySpec.DynamicAbilityTags.HasTagExact(InInputTag)) continue;
+		ASC->AbilitySpecInputReleased(const_cast<FGameplayAbilitySpec&>(AbilitySpec));
+	}
+}
 
 void APanic_RoomCharacter::Move(const FInputActionValue& Value)
 {

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "GameplayTagContainer.h"
 #include "Panic_RoomCharacter.generated.h"
 
 class UInputComponent;
@@ -77,6 +78,9 @@ protected:
 
 	//빙의되었을 때 호출되는 함수
 	virtual void PossessedBy(AController* NewController) override;
+
+	void Input_AbilityInputPressed(FGameplayTag InInputTag);
+	void Input_AbilityInputReleased(FGameplayTag InInputTag);
 
 public:
 #pragma region Component

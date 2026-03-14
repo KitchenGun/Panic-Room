@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "GameplayTagContainer.h"
 #include "GA_Basic.generated.h"
 
 class UCombatComponent;
@@ -42,4 +43,9 @@ protected:
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Ability")
 	EAbilityActivationPolicy ActivationPolicy;
+
+public:
+	/** 이 어빌리티를 발동할 입력 태그. DA_StartUpDataBase가 부여 시 DynamicAbilityTags에 자동 등록 */
+	UPROPERTY(EditDefaultsOnly, Category = "Ability")
+	FGameplayTag InputTag;
 };
