@@ -8,7 +8,7 @@
 #include "CombatComponent.generated.h"
 
 
-class UPanic_RoomPickUpComponent;
+class ABasicWeapon;
 
 UCLASS()
 class PANIC_ROOM_API UCombatComponent : public UPawnExtensionComponent
@@ -17,14 +17,19 @@ class PANIC_ROOM_API UCombatComponent : public UPawnExtensionComponent
 
 public:
 
-	//UFUNCTION(BlueprintCallable, Category = "Combat")
-	//void RegisterSpawnedWeapon(FGameplayTag WeaponTag,UPanic_RoomPickUpComponent* WeaponPickUpComponent,bool bIsEquipped = false);
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void RegisterSpawnedWeapon(FGameplayTag InWeaponTagToRegister, ABasicWeapon* InWeaponToRegister, bool bRegisterAsEquippedWeapon = false);
 
-	//UFUNCTION(BlueprintCallable,Category = "Combat")
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	ABasicWeapon* GetCharacterCarriedWeaponByTag(FGameplayTag InWeaponTagToGet) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	ABasicWeapon* GetCharacterCurrentEquippedWeapon() const;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Combat")
+	FGameplayTag CurrentEquippedWeaponTag;
 
 private:
 
-	//Pair<FGameplayTag, UPanic_RoomPickUpComponent*> ;
+	TMap<FGameplayTag, ABasicWeapon*> CharacterCarriedWeaponMap;
 };
