@@ -46,7 +46,7 @@ void UPanicRoomGameInstance::OpenLobbyLevelAsListenServer()
 		return;
 	}
 
-	UGameplayStatics::OpenLevel(this, LobbyLevelName, true, TEXT("listen"));
+	UGameplayStatics::OpenLevel(this, LobbyLevelName, true, TEXT("listen?game=/Game/Blueprints/Framework/GM_Lobby.GM_Lobby_C"));
 }
 
 void UPanicRoomGameInstance::TravelToJoinedSession(FName SessionName)

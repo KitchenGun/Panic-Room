@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include "GameFramework/GameMode.h"
 #include "Panic_RoomGameMode.generated.h"
 
 UCLASS(minimalapi)
-class APanic_RoomGameMode : public AGameModeBase
+class APanic_RoomGameMode : public AGameMode
 {
 	GENERATED_BODY()
 
