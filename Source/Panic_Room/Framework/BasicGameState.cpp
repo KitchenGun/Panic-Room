@@ -31,11 +31,3 @@ void ABasicGameState::RemovePlayerState(APlayerState* PlayerState)
 	Super::RemovePlayerState(PlayerState);
 	OnLobbyPlayersUpdated.Broadcast();
 }
-
-void ABasicGameState::OnRep_PlayerArray()
-{
-	Super::OnRep_PlayerArray();
-	OnLobbyPlayersUpdated.Broadcast();
-}
-
-

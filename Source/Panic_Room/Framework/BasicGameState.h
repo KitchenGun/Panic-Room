@@ -31,7 +31,5 @@ protected:
 	virtual void AddPlayerState(APlayerState* PlayerState) override;
 	// 로컬 : 플레이어 제거 시 호출
 	virtual void RemovePlayerState(APlayerState* PlayerState) override;
-	// 클라이언트 PlayerArray 복제 완료 시 호출
-	virtual void OnRep_PlayerArray() override;
 
 };
