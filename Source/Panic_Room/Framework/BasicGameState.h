@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameState.h"
+#include "GameFramework/GameStateBase.h"
 #include "BasicGameState.generated.h"
 
 class ABasicPlayerState;
@@ -14,7 +14,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLobbyPlayersUpdated);
  *
  */
 UCLASS()
-class PANIC_ROOM_API ABasicGameState : public AGameState
+class PANIC_ROOM_API ABasicGameState : public AGameStateBase
 {
 	GENERATED_BODY()
 

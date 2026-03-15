@@ -6,6 +6,8 @@
 #include "AdvancedFriendsGameInstance.h"
 #include "PanicRoomGameInstance.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLobbySessionResult, bool, bWasSuccessful);
+
 /**
  * [26-03-01][JJH]
  * Lobby Host State를 관리하는 게임인스턴스
@@ -43,6 +45,26 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Session")
 	void TravelToJoinedSession(FName SessionName = TEXT("GameSession"));
 
+	// Steam 친구 초대 오버레이 열기
+	UFUNCTION(BlueprintCallable, Category = "Steam")
+	void ShowSteamInviteOverlay();
+
+	// 로비 세션 생성 (Host 전용, Level 이동 후 호출)
+	// [JJH] TODO : 우선 4명으로 설정했는데 추후 바꾸든지 하자
+	UFUNCTION(BlueprintCallable, Category = "Session")
+	void CreateLobbySession(int32 MaxPlayers = 4);
+
+	// 현재 세션 제거
+	UFUNCTION(BlueprintCallable, Category = "Session")
+	void DestroyCurrentSessions();
+
+	// 세션 생성 결과 (Blueprint에서 바인딩 및 UI 체크 가능)
+	UPROPERTY(BlueprintAssignable, Category = "Session")
+	FOnLobbySessionResult OnLobbySessionCreated;
+	// 세션 제거 결과
+	UPROPERTY(BlueprintAssignable, Category = "Session")
+	FOnLobbySessionResult OnLobbySessionDestroyed;
+
 protected:
 	virtual void Init() override;
 
@@ -56,4 +78,13 @@ private:
 
 	UPROPERTY(Transient)
 	bool bSessionCreated;
+
+	// 세션 생성 완료 콜백
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+	// 세션 제거 완료 콜백
+	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+
+	FDelegateHandle CreateSessionDelegateHandle;
+	FDelegateHandle DestroySessionDelegateHandle;
 };
