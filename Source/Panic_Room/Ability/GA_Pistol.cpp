@@ -44,7 +44,6 @@ void UGA_Pistol::ActivateAbility(
 
 	if (!Character || !CombatComp || !FireAction)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[GA_Pistol] 활성화 실패 - Character/CombatComp/FireAction 확인"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
@@ -52,20 +51,54 @@ void UGA_Pistol::ActivateAbility(
 	ABasicWeapon* Weapon = CombatComp->GetCharacterCurrentEquippedWeapon();
 	if (!Weapon)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[GA_Pistol] 장착된 무기 없음"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
 	CachedWeapon = Weapon;
 
-	// GAS를 거치지 않고 직접 Fire() 바인딩 → 빠른 반복 발사 가능
-	if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(Character->InputComponent))
+	// InputComponent가 준비되지 않았으면 다음 틱에 재시도
+	if (!TryBindFireInput())
 	{
-		FireInputHandle = EIC->BindAction(FireAction, ETriggerEvent::Started, Weapon, &ABasicWeapon::Fire).GetHandle();
-		UE_LOG(LogTemp, Log, TEXT("[GA_Pistol] 발사 바인딩 완료"));
+		RetryBindFireInput();
 	}
 	// EndAbility 호출하지 않음 → 해제 전까지 지속 활성
+}
+
+bool UGA_Pistol::TryBindFireInput()
+{
+	APanic_RoomCharacter* Character = GetPanicRoomCharacterFromActorInfo();
+	ABasicWeapon* Weapon = CachedWeapon.Get();
+
+	if (!Character || !Weapon || !FireAction)
+	{
+		return false;
+	}
+
+	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(Character->InputComponent);
+	if (!EIC)
+	{
+		return false;
+	}
+
+	// GAS를 거치지 않고 직접 Fire() 바인딩 → 빠른 반복 발사 가능
+	FireInputHandle = EIC->BindAction(FireAction, ETriggerEvent::Started, Weapon, &ABasicWeapon::Fire).GetHandle();
+	return true;
+}
+
+void UGA_Pistol::RetryBindFireInput()
+{
+	if (TryBindFireInput())
+	{
+		return;
+	}
+
+	// 아직 준비 안 됨 → 다음 틱에 재시도
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimerForNextTick(
+			FTimerDelegate::CreateUObject(this, &UGA_Pistol::RetryBindFireInput));
+	}
 }
 
 void UGA_Pistol::EndAbility(
@@ -83,7 +116,6 @@ void UGA_Pistol::EndAbility(
 		{
 			EIC->RemoveBindingByHandle(FireInputHandle);
 			FireInputHandle = -1;
-			UE_LOG(LogTemp, Log, TEXT("[GA_Pistol] 발사 바인딩 제거"));
 		}
 	}
 

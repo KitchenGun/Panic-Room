@@ -50,4 +50,13 @@ private:
 
 	// EnhancedInput 바인딩 핸들 (해제용)
 	int32 FireInputHandle = -1;
+
+	// InputComponent가 준비되면 발사 바인딩 시도
+	// @return true: 바인딩 성공 / false: InputComponent 미준비
+	bool TryBindFireInput();
+
+	// InputComponent가 없을 때 다음 틱에 재시도
+	void RetryBindFireInput();
+
+	FTimerHandle RetryBindTimerHandle;
 };

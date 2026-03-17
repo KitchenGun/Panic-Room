@@ -10,8 +10,9 @@ void UDA_StartUpDataBase::GiveToAbilitySystemComponent(UAbilitySystemComponent* 
 {
 	check(ASC);
 
-	SetAbilities(ActivateOnGivenAbilities, ASC, ApplyLevel);
+	// ReactiveAbilities를 먼저 Grant해야 OnGiven 어빌리티가 이벤트를 보낼 때 수신 가능
 	SetAbilities(ReactiveAbilites, ASC, ApplyLevel);
+	SetAbilities(ActivateOnGivenAbilities, ASC, ApplyLevel);
 
 }
 

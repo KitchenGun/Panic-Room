@@ -40,6 +40,10 @@ protected:
 	UFUNCTION(BlueprintPure, Category = "PanicRoom|Ability")
 	UAbilitySystemComponent* GetASCFromActorInfo() const;
 
+	/** ASC가 PlayerState에 있는 경우에도 올바르게 GameplayEvent를 전송 */
+	UFUNCTION(BlueprintCallable, Category = "PanicRoom|Ability")
+	void SendGameplayEventToASC(FGameplayTag EventTag) const;
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Ability")
 	EAbilityActivationPolicy ActivationPolicy;

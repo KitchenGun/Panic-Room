@@ -16,6 +16,16 @@ UAbilitySystemComponent* UGA_Basic::GetASCFromActorInfo() const
 	return GetCurrentActorInfo()->AbilitySystemComponent.Get();
 }
 
+void UGA_Basic::SendGameplayEventToASC(FGameplayTag EventTag) const
+{
+	UAbilitySystemComponent* ASC = GetASCFromActorInfo();
+	if (!ASC) return;
+
+	FGameplayEventData Payload;
+	Payload.EventTag = EventTag;
+	ASC->HandleGameplayEvent(EventTag, &Payload);
+}
+
 void UGA_Basic::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
 	Super::OnGiveAbility(ActorInfo, Spec);
