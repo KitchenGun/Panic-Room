@@ -6,11 +6,20 @@
 #include "Ability/GA_Basic.h"
 #include "GA_Pistol.generated.h"
 
-
-class APanic_RoomCharacter;
-class ABasicPlayerState;
-class ABasicWeapon;
-
+/**
+ * UGA_Pistol
+ *
+ * 권총 발사 전용 어빌리티.
+ *
+ * - ActivationPolicy : OnInputTriggered  (InputTag_Fire 입력 시 활성화)
+ * - InstancingPolicy : NonInstanced      (발사 후 즉시 종료, 인스턴스 불필요)
+ *
+ * 무기 스폰·장착 관리는 GA_Grap_SpawnWeapon(Blueprint)이 담당한다.
+ * 이 어빌리티는 CombatComponent에서 현재 장착 무기를 가져와
+ * Fire()를 호출한 뒤 즉시 종료한다.
+ *
+ * GAS 쿨다운·탄약 비용·태그 차단은 이 어빌리티에 설정한다.
+ */
 UCLASS()
 class PANIC_ROOM_API UGA_Pistol : public UGA_Basic
 {
@@ -19,44 +28,10 @@ class PANIC_ROOM_API UGA_Pistol : public UGA_Basic
 public:
 	UGA_Pistol();
 
-	UFUNCTION(BlueprintPure, Category = "Ability")
-	APanic_RoomCharacter* GetPanicRoomCharacterFromActorInfo() const;
-
-	UFUNCTION(BlueprintPure, Category = "Ability")
-	ABasicPlayerState* GetBasicPlayerStateFromActorInfo() const;
-
 protected:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
-
-	virtual void EndAbility(
-		const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayAbilityActivationInfo ActivationInfo,
-		bool bReplicateEndAbility,
-		bool bWasCancelled) override;
-
-	// 에디터에서 IA_Fire InputAction 지정
-	UPROPERTY(EditDefaultsOnly, Category = "Ability|Fire")
-	class UInputAction* FireAction;
-
-private:
-	mutable TWeakObjectPtr<APanic_RoomCharacter> CachedPanicRoomCharacter;
-	mutable TWeakObjectPtr<ABasicPlayerState> CachedBasicPlayerState;
-	TWeakObjectPtr<ABasicWeapon> CachedWeapon;
-
-	// EnhancedInput 바인딩 핸들 (해제용)
-	int32 FireInputHandle = -1;
-
-	// InputComponent가 준비되면 발사 바인딩 시도
-	// @return true: 바인딩 성공 / false: InputComponent 미준비
-	bool TryBindFireInput();
-
-	// InputComponent가 없을 때 다음 틱에 재시도
-	void RetryBindFireInput();
-
-	FTimerHandle RetryBindTimerHandle;
 };

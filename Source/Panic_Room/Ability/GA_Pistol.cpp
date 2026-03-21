@@ -1,34 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Ability/GA_Pistol.h"
-#include "Character/Panic_RoomCharacter.h"
-#include "Character/BasicPlayerState.h"
 #include "ActorComponent/CombatComponent.h"
 #include "Weapon/BasicWeapon.h"
-#include "EnhancedInputComponent.h"
 
 UGA_Pistol::UGA_Pistol()
 {
-	// 장착 중 지속 활성 → InstancedPerActor 필수
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-}
-
-APanic_RoomCharacter* UGA_Pistol::GetPanicRoomCharacterFromActorInfo() const
-{
-	if (!CachedPanicRoomCharacter.IsValid())
-	{
-		CachedPanicRoomCharacter = Cast<APanic_RoomCharacter>(CurrentActorInfo->AvatarActor);
-	}
-	return CachedPanicRoomCharacter.Get();
-}
-
-ABasicPlayerState* UGA_Pistol::GetBasicPlayerStateFromActorInfo() const
-{
-	if (!CachedBasicPlayerState.IsValid())
-	{
-		CachedBasicPlayerState = Cast<ABasicPlayerState>(CurrentActorInfo->PlayerController->PlayerState);
-	}
-	return CachedBasicPlayerState.IsValid() ? CachedBasicPlayerState.Get() : nullptr;
+	// 발사 후 즉시 종료 → 인스턴스 유지 불필요
+	// GAS 쿨다운·비용은 CDO 기준으로 적용되므로 NonInstanced로 충분
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::NonInstanced;
 }
 
 void UGA_Pistol::ActivateAbility(
@@ -39,11 +19,12 @@ void UGA_Pistol::ActivateAbility(
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	APanic_RoomCharacter* Character = GetPanicRoomCharacterFromActorInfo();
+	// CombatComponent에서 현재 장착 무기 조회
+	// GA_Grap_SpawnWeapon이 사전에 무기를 등록해 두어야 한다
 	UCombatComponent* CombatComp = GetCombatComponentFromActorInfo();
-
-	if (!Character || !CombatComp || !FireAction)
+	if (!CombatComp)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[GA_Pistol] CombatComponent를 찾을 수 없음"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
@@ -51,75 +32,14 @@ void UGA_Pistol::ActivateAbility(
 	ABasicWeapon* Weapon = CombatComp->GetCharacterCurrentEquippedWeapon();
 	if (!Weapon)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[GA_Pistol] 장착된 무기 없음 - GA_Grap_SpawnWeapon 선행 확인 필요"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	CachedWeapon = Weapon;
+	// 발사 실행
+	Weapon->Fire();
 
-	// InputComponent가 준비되지 않았으면 다음 틱에 재시도
-	if (!TryBindFireInput())
-	{
-		RetryBindFireInput();
-	}
-	// EndAbility 호출하지 않음 → 해제 전까지 지속 활성
-}
-
-bool UGA_Pistol::TryBindFireInput()
-{
-	APanic_RoomCharacter* Character = GetPanicRoomCharacterFromActorInfo();
-	ABasicWeapon* Weapon = CachedWeapon.Get();
-
-	if (!Character || !Weapon || !FireAction)
-	{
-		return false;
-	}
-
-	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(Character->InputComponent);
-	if (!EIC)
-	{
-		return false;
-	}
-
-	// GAS를 거치지 않고 직접 Fire() 바인딩 → 빠른 반복 발사 가능
-	FireInputHandle = EIC->BindAction(FireAction, ETriggerEvent::Started, Weapon, &ABasicWeapon::Fire).GetHandle();
-	return true;
-}
-
-void UGA_Pistol::RetryBindFireInput()
-{
-	if (TryBindFireInput())
-	{
-		return;
-	}
-
-	// 아직 준비 안 됨 → 다음 틱에 재시도
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().SetTimerForNextTick(
-			FTimerDelegate::CreateUObject(this, &UGA_Pistol::RetryBindFireInput));
-	}
-}
-
-void UGA_Pistol::EndAbility(
-	const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo,
-	bool bReplicateEndAbility,
-	bool bWasCancelled)
-{
-	// 발사 바인딩 제거
-	APanic_RoomCharacter* Character = GetPanicRoomCharacterFromActorInfo();
-	if (Character && FireInputHandle != -1)
-	{
-		if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(Character->InputComponent))
-		{
-			EIC->RemoveBindingByHandle(FireInputHandle);
-			FireInputHandle = -1;
-		}
-	}
-
-	CachedWeapon.Reset();
-
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	// GAS 흐름 안에서 종료 → 쿨다운·비용이 이 시점에 정산됨
+	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
