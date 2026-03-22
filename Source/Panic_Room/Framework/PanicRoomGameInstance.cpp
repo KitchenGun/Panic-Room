@@ -169,7 +169,7 @@ void UPanicRoomGameInstance::CreateLobbySession(int32 MaxPlayers)
 	FOnlineSessionSettings SessionSettings;
 	SessionSettings.NumPublicConnections = MaxPlayers;		// 최대 유저
 	SessionSettings.bShouldAdvertise = true;				// 세션 검색 가능 (추후 필요하겠지)
-	SessionSettings.bAllowJoinInProgress = false;			// 게임 중 참가 여부
+	SessionSettings.bAllowJoinInProgress = true;			// 게임 중 참가 여부
 	SessionSettings.bIsLANMatch = false;					// 인터넷 매치
 	SessionSettings.bUsesPresence = true;					// Steam Presence사용
 	SessionSettings.bAllowJoinViaPresence = true;			// Presence로 참가 가능 여부
@@ -179,6 +179,8 @@ void UPanicRoomGameInstance::CreateLobbySession(int32 MaxPlayers)
 	CreateSessionDelegateHandle = Sessions->AddOnCreateSessionCompleteDelegate_Handle(
 		FOnCreateSessionCompleteDelegate::CreateUObject(this, &UPanicRoomGameInstance::OnCreateSessionComplete)
 		);
+
+	Sessions->CreateSession(0, NAME_GameSession, SessionSettings);
 }
 
 void UPanicRoomGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
