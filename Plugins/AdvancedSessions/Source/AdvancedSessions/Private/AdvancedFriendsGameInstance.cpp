@@ -53,6 +53,8 @@ void UAdvancedFriendsGameInstance::OnJoinSessionComplete(FName SessionName, EOnJ
 		FString ConnectInfo;
 		if (SessionInterface->GetResolvedConnectString(NAME_GameSession, ConnectInfo))
 		{
+			// [JJH] 로그 추후 제거 하셈.
+		    UE_LOG(LogTemp, Warning, TEXT("OnJoinSessionComplete - ConnectInfo: %s"), *ConnectInfo);
 			APlayerController* PlayerController = GetFirstLocalPlayerController();
 			if (PlayerController)
 			{
