@@ -174,7 +174,8 @@ void UPanicRoomGameInstance::CreateLobbySession(int32 MaxPlayers)
 	SessionSettings.bUsesPresence = true;					// Steam Presence사용
 	SessionSettings.bAllowJoinViaPresence = true;			// Presence로 참가 가능 여부
 	SessionSettings.bUseLobbiesIfAvailable = true;			// Steam 로비 사용
-	
+	SessionSettings.bAllowInvites = true;					// 초대 가능
+
 	// 콜백 등록
 	CreateSessionDelegateHandle = Sessions->AddOnCreateSessionCompleteDelegate_Handle(
 		FOnCreateSessionCompleteDelegate::CreateUObject(this, &UPanicRoomGameInstance::OnCreateSessionComplete)
