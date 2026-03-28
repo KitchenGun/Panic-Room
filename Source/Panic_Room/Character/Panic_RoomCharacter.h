@@ -76,13 +76,47 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	// End of APawn interface
 
-	//빙의되었을 때 호출되는 함수
+	//빙의되었을 때 호출되는 함수 (서버 전용)
 	virtual void PossessedBy(AController* NewController) override;
+
+	// PlayerState 복제 완료 시 호출 (클라이언트 전용 — ASC 초기화 경로)
+	virtual void OnRep_PlayerState() override;
 
 	void Input_AbilityInputPressed(FGameplayTag InInputTag);
 	void Input_AbilityInputReleased(FGameplayTag InInputTag);
 
+	UFUNCTION()
+	void OnRep_IsDead();
+
 public:
+
+	#pragma region Death
+	/**
+	 * 체력이 0이 되었을 때 호출.
+	 * GA_Death(ReactiveAbility)가 Event.Character.Death 수신 시 이 함수를 호출한다.
+	 * 내부에서 HasAuthority() 검사 — 서버에서만 실행된다.
+	 */
+	void HandleDeath();
+
+	/** 사망 상태 여부 (중복 호출 방지, 클라이언트 복제) */
+	UPROPERTY(ReplicatedUsing = OnRep_IsDead, BlueprintReadOnly, Category = "State")
+	bool bIsDead = false;
+	#pragma endregion Death
+
+	#pragma region Debug
+	/**
+	 * 디버그: 자기 자신에게 지정량의 데미지를 GAS 경로로 적용한다.
+	 * 콘솔에서 "DebugDamage 50" 또는 "DebugDamage" (기본 9999) 로 호출.
+	 * Shipping 빌드에서는 자동 제거된다.
+	 */
+	UFUNCTION(Exec)
+	void DebugDamage(float Amount = 9999.f);
+
+	/** 디버그: 현재 체력 상태를 로그에 출력. 콘솔에서 "DebugHealth" 로 호출. */
+	UFUNCTION(Exec)
+	void DebugHealth();
+	#pragma endregion Debug
+
 #pragma region Component
 	/** Returns Mesh1P subobject **/
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }

@@ -13,6 +13,10 @@
 #include "GameplayTags.h"
 #include "BasicPlayerState.h"
 #include "CombatComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "Framework/Panic_RoomGameMode.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Attribute/BasicAttributeSet.h"
 //GAS
 #include "AbilitySystemComponent.h"
 
@@ -48,9 +52,7 @@ APanic_RoomCharacter::APanic_RoomCharacter()
 
 void APanic_RoomCharacter::BeginPlay()
 {
-	// Call the base class  
 	Super::BeginPlay();
-	PlayerState = Cast<ABasicPlayerState>(GetPlayerState());
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
@@ -92,14 +94,27 @@ void APanic_RoomCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 void APanic_RoomCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	PlayerState = Cast<ABasicPlayerState>(GetPlayerState());
 
+	// 서버: PlayerState 캐싱 + ASC 초기화 + 어빌리티 부여
+	PlayerState = Cast<ABasicPlayerState>(GetPlayerState());
 	if (PlayerState)
 	{
 		PlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(PlayerState, this);
 		PlayerState->SetGADefault(PlayerState->GetAbilitySystemComponent());
 	}
-	
+}
+
+void APanic_RoomCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	// 클라이언트: PlayerState 복제 완료 시 ASC 초기화
+	// 어빌리티 부여(SetGADefault)는 서버의 PossessedBy에서 이미 처리됨 — 복제로 전달
+	PlayerState = Cast<ABasicPlayerState>(GetPlayerState());
+	if (PlayerState)
+	{
+		PlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(PlayerState, this);
+	}
 }
 
 
@@ -158,4 +173,89 @@ void APanic_RoomCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void APanic_RoomCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APanic_RoomCharacter, bIsDead);
+}
+
+void APanic_RoomCharacter::HandleDeath()
+{
+	// 서버에서만 실행 / 중복 방지
+	if (!HasAuthority() || bIsDead) return;
+
+	bIsDead = true;
+	OnRep_IsDead(); // 서버에서 직접 적용
+
+	// GameMode 에 리스폰 요청
+	if (APanic_RoomGameMode* GM = GetWorld()->GetAuthGameMode<APanic_RoomGameMode>())
+	{
+		GM->RequestRespawn(GetController());
+	}
+}
+
+void APanic_RoomCharacter::OnRep_IsDead()
+{
+	if (!bIsDead) return;
+
+	// 이동 및 콜리전 비활성화 (서버·클라이언트 공통)
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCharacterMovement()->DisableMovement();
+
+	// 소유 클라이언트의 입력 차단
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		DisableInput(PC);
+	}
+}
+
+// ── 디버그 전용 ────────────────────────────────────────────────
+void APanic_RoomCharacter::DebugDamage(float Amount)
+{
+	if (!HasAuthority()) return;
+
+	ABasicPlayerState* PS = Cast<ABasicPlayerState>(GetPlayerState());
+	if (!PS) return;
+
+	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	UBasicAttributeSet* AttrSet = const_cast<UBasicAttributeSet*>(
+		Cast<UBasicAttributeSet>(PS->GetAttributeSet()));
+	if (!AttrSet) return;
+
+	// GAS 경로를 통한 데미지 적용 (Instant GE 동적 생성)
+	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+	Context.AddInstigator(this, this);
+
+	// UGameplayEffect CDO를 동적으로 생성하여 Damage Meta Attribute에 값 적용
+	UGameplayEffect* DamageEffect = NewObject<UGameplayEffect>(GetTransientPackage(), TEXT("DebugDamageEffect"));
+	DamageEffect->DurationPolicy = EGameplayEffectDurationType::Instant;
+
+	int32 Idx = DamageEffect->Modifiers.Num();
+	DamageEffect->Modifiers.SetNum(Idx + 1);
+	FGameplayModifierInfo& ModInfo = DamageEffect->Modifiers[Idx];
+	ModInfo.Attribute = UBasicAttributeSet::GetDamageAttribute();
+	ModInfo.ModifierOp = EGameplayModOp::Additive;
+	ModInfo.ModifierMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(Amount));
+
+	ASC->ApplyGameplayEffectToSelf(DamageEffect, 1.f, Context);
+
+	UE_LOG(LogTemp, Warning, TEXT("[Debug] %.0f 데미지 적용 → Health: %.0f / %.0f"),
+		Amount, AttrSet->GetHealth(), AttrSet->GetMaxHealth());
+}
+
+void APanic_RoomCharacter::DebugHealth()
+{
+	ABasicPlayerState* PS = Cast<ABasicPlayerState>(GetPlayerState());
+	if (!PS) return;
+
+	const UBasicAttributeSet* AttrSet = Cast<UBasicAttributeSet>(PS->GetAttributeSet());
+	if (!AttrSet) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("[Debug] Health: %.0f / %.0f | Dead: %s"),
+		AttrSet->GetHealth(), AttrSet->GetMaxHealth(),
+		bIsDead ? TEXT("Yes") : TEXT("No"));
 }
