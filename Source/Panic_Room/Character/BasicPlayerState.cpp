@@ -3,7 +3,7 @@
 
 #include "Character/BasicPlayerState.h"
 #include "AbilitySystemComponent.h"
-#include "AttributeSet.h"
+#include "Attribute/BasicAttributeSet.h"
 #include "Net/UnrealNetwork.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineIdentityInterface.h"
@@ -25,7 +25,7 @@ ABasicPlayerState::ABasicPlayerState()
 	ASC->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	// AttributeSet 생성
-	AttributeSet = CreateDefaultSubobject<UAttributeSet>(TEXT("AttributeSet"));
+	AttributeSet = CreateDefaultSubobject<UBasicAttributeSet>(TEXT("AttributeSet"));
 
 	// 복제 활성화
 	bReplicates = true;
@@ -43,9 +43,25 @@ void ABasicPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 void ABasicPlayerState::SetGADefault(UAbilitySystemComponent* InASC)
 {
+	// 이미 어빌리티가 부여된 경우 중복 방지 (리스폰 시 PossessedBy 재호출 대비)
+	if (InASC->GetActivatableAbilities().Num() > 0)
+	{
+		UE_LOG(LogTemp, Display, TEXT("[SetGADefault] Abilities already granted — skipping"));
+		return;
+	}
+
 	if (UDA_StartUpDataBase* LoadedData = StartUpDataBase.LoadSynchronous())
 	{
 		LoadedData->GiveToAbilitySystemComponent(InASC);
+	}
+}
+
+void ABasicPlayerState::ResetAttributesForRespawn()
+{
+	if (AttributeSet)
+	{
+		// Health를 MaxHealth로 복구
+		AttributeSet->InitHealth(AttributeSet->GetMaxHealth());
 	}
 }
 

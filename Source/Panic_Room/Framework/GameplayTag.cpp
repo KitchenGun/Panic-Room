@@ -13,6 +13,11 @@ namespace PanicRoomGameplayTags
     UE_DEFINE_GAMEPLAY_TAG(InputTag_Look, "InputTag.Look");
     UE_DEFINE_GAMEPLAY_TAG(InputTag_Jump, "InputTag.Jump");
     UE_DEFINE_GAMEPLAY_TAG(InputTag_Fire, "InputTag.Fire");
+
+    UE_DEFINE_GAMEPLAY_TAG(Event_Character_Death,  "Event.Character.Death");
+    UE_DEFINE_GAMEPLAY_TAG(GameplayEffect_Damage,  "GameplayEffect.Damage");
+    UE_DEFINE_GAMEPLAY_TAG(GameplayEffect_Heal,    "GameplayEffect.Heal");
+    UE_DEFINE_GAMEPLAY_TAG(Status_Dead,            "Status.Dead");
 }
 
 

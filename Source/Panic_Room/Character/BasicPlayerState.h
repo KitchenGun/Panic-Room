@@ -28,11 +28,14 @@ public:
 
 	void SetGADefault(UAbilitySystemComponent* ASC);
 
+	/** 리스폰 시 체력을 MaxHealth로 초기화 */
+	void ResetAttributesForRespawn();
+
 	//Get ASC Attribute
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	class UAttributeSet* GetAttributeSet() const { return AttributeSet; }
+	class UBasicAttributeSet* GetAttributeSet() const { return AttributeSet; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -71,7 +74,7 @@ protected:
 	TObjectPtr<class UAbilitySystemComponent> ASC;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
-	TObjectPtr<class UAttributeSet> AttributeSet;
+	TObjectPtr<class UBasicAttributeSet> AttributeSet;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TSoftObjectPtr<UDA_StartUpDataBase> StartUpDataBase;
