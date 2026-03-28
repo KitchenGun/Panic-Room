@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameplayEffectTypes.h"
 #include "BasicWeapon.generated.h"
 
 class UBoxComponent;
 class APanic_RoomCharacter;
+class UGameplayEffect;
 
 UCLASS()
 class PANIC_ROOM_API ABasicWeapon : public AActor
@@ -34,27 +36,35 @@ public:
 
 public:
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
 	USkeletalMeshComponent* WeaponMesh;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
 	UBoxComponent* WeaponCollision;
 
 	/** 캐릭터 메시에서 무기를 붙일 소켓 이름 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Attachment")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon|Attachment")
 	FName WeaponSocketName = TEXT("GripPoint");
 
 	/** 총구 소켓 이름 (라인트레이스 시작점) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Fire")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon|Fire")
 	FName MuzzleSocketName = TEXT("Muzzle");
 
 	/** 발사 사운드 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Fire")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon|Fire")
 	USoundBase* FireSound;
 
 	/** 발사 시 캐릭터 팔 애니메이션 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Fire")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon|Fire")
 	UAnimMontage* FireAnimation;
+
+	/**
+	 * 히트 시 적용할 데미지 GameplayEffect.
+	 * GE_Damage_Base 자식 클래스(예: GE_PistolDamage)를 에디터에서 지정한다.
+	 * 블루프린트 자식 클래스의 Class Defaults에서 직접 변경 가능.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon|Damage")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
 	/** 소유 캐릭터 약참조 */
 	UPROPERTY()
