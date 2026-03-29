@@ -91,35 +91,81 @@ void APanic_RoomCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	InputComp->BindAbilityInputAction(InputConfigDataAsset, this, &ThisClass::Input_AbilityInputPressed, &ThisClass::Input_AbilityInputReleased);
 }
 
+void APanic_RoomCharacter::InitializeASC()
+{
+	// 이미 초기화 완료된 경우 스킵
+	if (PlayerState) return;
+
+	ABasicPlayerState* PS = Cast<ABasicPlayerState>(GetPlayerState());
+	if (!PS) return;
+
+	PlayerState = PS;
+
+	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	// ASC에 OwnerActor(PlayerState)와 AvatarActor(이 캐릭터)를 알려줌
+	ASC->InitAbilityActorInfo(PS, this);
+
+	UE_LOG(LogTemp, Display, TEXT("[InitializeASC] %s | Server: %s"),
+		*GetName(), HasAuthority() ? TEXT("Y") : TEXT("N"));
+}
+
+// ── 경로 1: 서버 전용 ────────────────────────────────────────
 void APanic_RoomCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
-	// 서버: PlayerState 캐싱 + ASC 초기화 + 어빌리티 부여
-	PlayerState = Cast<ABasicPlayerState>(GetPlayerState());
+	// 서버: ASC 초기화
+	InitializeASC();
+
 	if (PlayerState)
 	{
-		PlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(PlayerState, this);
-		PlayerState->SetGADefault(PlayerState->GetAbilitySystemComponent());
+		UAbilitySystemComponent* ASC = PlayerState->GetAbilitySystemComponent();
+
+		// 최초 스폰 시 어빌리티 부여
+		PlayerState->SetGADefault(ASC);
+
+		// 리스폰 시 기존 어빌리티의 SourceObject를 새 폰으로 갱신
+		for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+		{
+			if (Spec.SourceObject != this)
+			{
+				Spec.SourceObject = this;
+			}
+		}
+
+		if (ASC->GetActivatableAbilities().Num() > 0)
+		{
+			ASC->MarkAbilitySpecDirty(ASC->GetActivatableAbilities().Last(), true);
+		}
 	}
+
 }
 
+// ── 경로 2: 클라이언트 — PlayerState 복제 수신 ──────────────
 void APanic_RoomCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+	InitializeASC();
+}
 
-	// 클라이언트: PlayerState 복제 완료 시 ASC 초기화
-	// 어빌리티 부여(SetGADefault)는 서버의 PossessedBy에서 이미 처리됨 — 복제로 전달
-	PlayerState = Cast<ABasicPlayerState>(GetPlayerState());
-	if (PlayerState)
-	{
-		PlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(PlayerState, this);
-	}
+// ── 경로 3: 클라이언트 — Controller 복제 수신 (백업) ────────
+void APanic_RoomCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	InitializeASC();
 }
 
 
 void APanic_RoomCharacter::Input_AbilityInputPressed(FGameplayTag InInputTag)
 {
+	// 경로 4: 위 경로들이 모두 실패한 경우 최후 Lazy Init
+	if (!PlayerState)
+	{
+		InitializeASC();
+	}
+
 	UAbilitySystemComponent* ASC = PlayerState ? PlayerState->GetAbilitySystemComponent() : nullptr;
 	if (!ASC || !InInputTag.IsValid()) return;
 
@@ -252,10 +298,57 @@ void APanic_RoomCharacter::DebugHealth()
 	ABasicPlayerState* PS = Cast<ABasicPlayerState>(GetPlayerState());
 	if (!PS) return;
 
+	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
 	const UBasicAttributeSet* AttrSet = Cast<UBasicAttributeSet>(PS->GetAttributeSet());
-	if (!AttrSet) return;
 
-	UE_LOG(LogTemp, Warning, TEXT("[Debug] Health: %.0f / %.0f | Dead: %s"),
-		AttrSet->GetHealth(), AttrSet->GetMaxHealth(),
-		bIsDead ? TEXT("Yes") : TEXT("No"));
+	// ── 플레이어 정보 ──
+	UE_LOG(LogTemp, Warning, TEXT("========================================"));
+	UE_LOG(LogTemp, Warning, TEXT("[Debug] Player: %s | Pawn: %s | Server: %s"),
+		*PS->GetPlayerName(), *GetName(),
+		HasAuthority() ? TEXT("Y") : TEXT("N"));
+
+	// ── 체력 상태 ──
+	if (AttrSet)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Debug] Health: %.0f / %.0f | Dead: %s"),
+			AttrSet->GetHealth(), AttrSet->GetMaxHealth(),
+			bIsDead ? TEXT("Yes") : TEXT("No"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Debug] AttributeSet: NULL"));
+	}
+
+	// ── ASC 초기화 상태 ──
+	UE_LOG(LogTemp, Warning, TEXT("[Debug] PlayerState cached: %s | ASC: %s"),
+		PlayerState ? TEXT("Y") : TEXT("N"),
+		ASC ? TEXT("Y") : TEXT("N"));
+
+	// ── 보유 어빌리티 목록 ──
+	if (ASC)
+	{
+		const TArray<FGameplayAbilitySpec>& Abilities = ASC->GetActivatableAbilities();
+		UE_LOG(LogTemp, Warning, TEXT("[Debug] Abilities: %d 개"), Abilities.Num());
+
+		for (int32 i = 0; i < Abilities.Num(); ++i)
+		{
+			const FGameplayAbilitySpec& Spec = Abilities[i];
+			FString AbilityName = Spec.Ability ? Spec.Ability->GetClass()->GetName() : TEXT("NULL");
+			FString InputTag = Spec.DynamicAbilityTags.ToStringSimple();
+			FString SourceName = Spec.SourceObject.IsValid()
+				? Spec.SourceObject->GetName() : TEXT("NULL");
+
+			UE_LOG(LogTemp, Warning, TEXT("[Debug]   [%d] %s | InputTag: %s | Active: %s | Source: %s"),
+				i, *AbilityName,
+				InputTag.IsEmpty() ? TEXT("None") : *InputTag,
+				Spec.IsActive() ? TEXT("Y") : TEXT("N"),
+				*SourceName);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Debug] ASC: NULL — 어빌리티 조회 불가"));
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("========================================"));
 }

@@ -79,8 +79,18 @@ protected:
 	//빙의되었을 때 호출되는 함수 (서버 전용)
 	virtual void PossessedBy(AController* NewController) override;
 
-	// PlayerState 복제 완료 시 호출 (클라이언트 전용 — ASC 초기화 경로)
+	// PlayerState 복제 완료 시 호출 (클라이언트 — ASC 초기화 2차 경로)
 	virtual void OnRep_PlayerState() override;
+
+	// Controller 복제 완료 시 호출 (클라이언트 — ASC 초기화 3차 백업 경로)
+	virtual void OnRep_Controller() override;
+
+	/**
+	 * 클라이언트 ASC 초기화 공통 헬퍼.
+	 * PossessedBy / OnRep_PlayerState / OnRep_Controller / Input 폴백에서 호출.
+	 * PlayerState가 유효해지는 최초 시점에 1회 실행되고, 이후 호출은 무시된다.
+	 */
+	void InitializeASC();
 
 	void Input_AbilityInputPressed(FGameplayTag InInputTag);
 	void Input_AbilityInputReleased(FGameplayTag InInputTag);

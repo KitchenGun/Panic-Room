@@ -81,4 +81,7 @@ protected:
 
 	// 아바타 재시도 타이머
 	FTimerHandle AvatarRetryTimerHandle;
+
+	/** startup ability 부여 완료 여부 (중복 방지) */
+	bool bAbilitiesGranted = false;
 };

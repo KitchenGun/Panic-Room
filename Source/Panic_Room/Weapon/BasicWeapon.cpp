@@ -13,6 +13,9 @@ ABasicWeapon::ABasicWeapon()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	// 멀티플레이: 서버에서 스폰 → 클라이언트로 복제
+	bReplicates = true;
+
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	RootComponent = WeaponMesh;
 
@@ -89,10 +92,21 @@ void ABasicWeapon::Fire()
 			AActor* HitActor = Hit.GetActor();
 			if (!HitActor) continue;
 
-			// ASC를 가진 대상만 데미지 처리 대상
-			IAbilitySystemInterface* TargetInterface = Cast<IAbilitySystemInterface>(HitActor);
-			const bool bHasASC = TargetInterface != nullptr
-				&& TargetInterface->GetAbilitySystemComponent() != nullptr;
+			// 히트 대상의 ASC 조회: 캐릭터 → PlayerState → IAbilitySystemInterface
+			// ASC가 PlayerState에 있으므로 HitActor(Character)가 아닌 PlayerState에서 조회
+			UAbilitySystemComponent* TargetASC = nullptr;
+			if (APawn* HitPawn = Cast<APawn>(HitActor))
+			{
+				if (APlayerState* HitPS = HitPawn->GetPlayerState())
+				{
+					if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(HitPS))
+					{
+						TargetASC = ASCInterface->GetAbilitySystemComponent();
+					}
+				}
+			}
+
+			const bool bHasASC = TargetASC != nullptr;
 
 			// 디버그: 히트된 모든 액터에 구체 표시 (ASC 대상: 초록, 비대상: 노랑)
 			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 8.f, 8,
@@ -104,8 +118,6 @@ void ABasicWeapon::Fire()
 
 			// ASC 없거나 DamageEffectClass 미설정이면 스킵
 			if (!bHasASC || !DamageEffectClass) continue;
-
-			UAbilitySystemComponent* TargetASC = TargetInterface->GetAbilitySystemComponent();
 
 			// 공격자(소유 캐릭터)의 ASC는 PlayerState에 존재
 			UAbilitySystemComponent* SourceASC = nullptr;

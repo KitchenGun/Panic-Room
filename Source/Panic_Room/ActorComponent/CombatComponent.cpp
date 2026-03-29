@@ -3,7 +3,51 @@
 
 #include "ActorComponent/CombatComponent.h"
 #include "Weapon/BasicWeapon.h"
+#include "Character/Panic_RoomCharacter.h"
+#include "Net/UnrealNetwork.h"
+#include "Framework/GameplayTag.h"
 
+UCombatComponent::UCombatComponent()
+{
+	// 복제 활성화 (EquippedWeapon 복제를 위해 필요)
+	SetIsReplicatedByDefault(true);
+}
+
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
+}
+
+// ── 클라이언트 복제 수신 ──────────────────────────────────────
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if (!EquippedWeapon) return;
+
+	// 클라이언트 측 태그 설정
+	if (!CurrentEquippedWeaponTag.IsValid())
+	{
+		CurrentEquippedWeaponTag = PanicRoomGameplayTags::Weapon_Pistol_Equip;
+	}
+
+	// 클라이언트 측 맵에도 등록 (태그 기반 조회 호환)
+	if (!CharacterCarriedWeaponMap.Contains(CurrentEquippedWeaponTag))
+	{
+		CharacterCarriedWeaponMap.Emplace(CurrentEquippedWeaponTag, EquippedWeapon);
+	}
+
+	// 클라이언트에서도 캐릭터에 부착 (아직 안 된 경우)
+	APanic_RoomCharacter* Character = Cast<APanic_RoomCharacter>(GetPawnOwner());
+	if (Character && !EquippedWeapon->GetOwnerCharacter())
+	{
+		EquippedWeapon->AttachToCharacter(Character);
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("[CombatComponent] OnRep_EquippedWeapon: %s (Client)"),
+		*EquippedWeapon->GetName());
+}
+
+// ── 무기 등록 (GA_Grap_SpawnWeapon 블루프린트에서 호출) ───────
 void UCombatComponent::RegisterSpawnedWeapon(FGameplayTag InWeaponTagToRegister, ABasicWeapon* InWeaponToRegister, bool bRegisterAsEquippedWeapon)
 {
 	// 동일한 태그로 이미 등록된 무기가 있으면 중복 등록 방지
@@ -17,10 +61,11 @@ void UCombatComponent::RegisterSpawnedWeapon(FGameplayTag InWeaponTagToRegister,
 	// 태그와 무기를 맵에 추가
 	CharacterCarriedWeaponMap.Emplace(InWeaponTagToRegister, InWeaponToRegister);
 
-	// 장착 무기로 등록 요청 시 현재 장착 태그를 갱신
+	// 장착 무기로 등록 요청 시 현재 장착 태그 + 복제 포인터 갱신
 	if (bRegisterAsEquippedWeapon)
 	{
 		CurrentEquippedWeaponTag = InWeaponTagToRegister;
+		EquippedWeapon = InWeaponToRegister;
 	}
 
 	// 등록 완료 로그 출력
@@ -44,12 +89,17 @@ ABasicWeapon* UCombatComponent::GetCharacterCarriedWeaponByTag(FGameplayTag InWe
 
 ABasicWeapon* UCombatComponent::GetCharacterCurrentEquippedWeapon() const
 {
-	// 장착 태그가 유효하지 않으면 장착된 무기 없음
-	if (!CurrentEquippedWeaponTag.IsValid())
+	// 1차: 복제된 포인터 직접 반환 (서버·클라이언트 모두 신뢰성 높음)
+	if (EquippedWeapon)
 	{
-		return nullptr;
+		return EquippedWeapon;
 	}
 
-	// 현재 장착 태그로 맵에서 무기를 조회하여 반환
-	return GetCharacterCarriedWeaponByTag(CurrentEquippedWeaponTag);
+	// 2차: 태그 기반 맵 조회 (폴백)
+	if (CurrentEquippedWeaponTag.IsValid())
+	{
+		return GetCharacterCarriedWeaponByTag(CurrentEquippedWeaponTag);
+	}
+
+	return nullptr;
 }

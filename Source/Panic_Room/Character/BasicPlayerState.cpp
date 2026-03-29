@@ -43,8 +43,7 @@ void ABasicPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 void ABasicPlayerState::SetGADefault(UAbilitySystemComponent* InASC)
 {
-	// 이미 어빌리티가 부여된 경우 중복 방지 (리스폰 시 PossessedBy 재호출 대비)
-	if (InASC->GetActivatableAbilities().Num() > 0)
+	if (bAbilitiesGranted)
 	{
 		UE_LOG(LogTemp, Display, TEXT("[SetGADefault] Abilities already granted — skipping"));
 		return;
@@ -53,6 +52,12 @@ void ABasicPlayerState::SetGADefault(UAbilitySystemComponent* InASC)
 	if (UDA_StartUpDataBase* LoadedData = StartUpDataBase.LoadSynchronous())
 	{
 		LoadedData->GiveToAbilitySystemComponent(InASC);
+		bAbilitiesGranted = true;
+		UE_LOG(LogTemp, Display, TEXT("[SetGADefault] Abilities granted successfully"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[SetGADefault] StartUpDataBase is null — check PlayerState BP defaults"));
 	}
 }
 
