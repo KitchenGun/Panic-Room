@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "GameplayTagContainer.h"
+#include "AbilitySystemInterface.h"
 #include "Panic_RoomCharacter.generated.h"
 
 class UInputComponent;
@@ -19,7 +20,7 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class APanic_RoomCharacter : public ACharacter
+class APanic_RoomCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -57,6 +58,11 @@ public:
 	APanic_RoomCharacter();
 
 	virtual void BeginPlay() override;
+
+	// IAbilitySystemInterface — AvatarActor(Character) 기준으로 ASC를 조회할 수 있도록 구현.
+	// GAS 내부 유틸, GameplayCue, TargetActor 등이 Character를 통해 ASC를 찾을 때 사용된다.
+	// 실제 ASC는 PlayerState가 소유하며 이 함수는 그것을 그대로 반환한다.
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 
 protected:
@@ -113,19 +119,6 @@ public:
 	bool bIsDead = false;
 	#pragma endregion Death
 
-	#pragma region Debug
-	/**
-	 * 디버그: 자기 자신에게 지정량의 데미지를 GAS 경로로 적용한다.
-	 * 콘솔에서 "DebugDamage 50" 또는 "DebugDamage" (기본 9999) 로 호출.
-	 * Shipping 빌드에서는 자동 제거된다.
-	 */
-	UFUNCTION(Exec)
-	void DebugDamage(float Amount = 9999.f);
-
-	/** 디버그: 현재 체력 상태를 로그에 출력. 콘솔에서 "DebugHealth" 로 호출. */
-	UFUNCTION(Exec)
-	void DebugHealth();
-	#pragma endregion Debug
 
 #pragma region Component
 	/** Returns Mesh1P subobject **/

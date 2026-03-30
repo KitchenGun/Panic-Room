@@ -31,6 +31,12 @@ public:
 	/** 리스폰 시 체력을 MaxHealth로 초기화 */
 	void ResetAttributesForRespawn();
 
+	/** 어빌리티 부여 완료 여부 조회 */
+	bool WasAbilitiesGranted() const { return bAbilitiesGranted; }
+
+	/** 리스폰 시 어빌리티 재부여를 위해 플래그 리셋 */
+	void ResetAbilitiesGranted() { bAbilitiesGranted = false; }
+
 	//Get ASC Attribute
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;

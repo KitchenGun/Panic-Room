@@ -61,6 +61,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	ABasicWeapon* GetCharacterCurrentEquippedWeapon() const;
 
+	/** 리스폰 시 무기 맵과 장착 상태를 초기화한다 */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ClearCarriedWeapons();
+
 	/** 현재 장착된 무기의 GameplayTag. 블루프린트에서 직접 읽기/쓰기 가능 */
 	UPROPERTY(BlueprintReadWrite, Category = "Combat")
 	FGameplayTag CurrentEquippedWeaponTag;

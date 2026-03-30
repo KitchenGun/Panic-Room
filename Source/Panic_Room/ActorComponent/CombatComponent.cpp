@@ -51,12 +51,15 @@ void UCombatComponent::OnRep_EquippedWeapon()
 void UCombatComponent::RegisterSpawnedWeapon(FGameplayTag InWeaponTagToRegister, ABasicWeapon* InWeaponToRegister, bool bRegisterAsEquippedWeapon)
 {
 	// 동일한 태그로 이미 등록된 무기가 있으면 중복 등록 방지
-	checkf(!CharacterCarriedWeaponMap.Contains(InWeaponTagToRegister),
-		TEXT("A weapon named %s has already been added as a carried weapon"),
-		*InWeaponTagToRegister.ToString());
+	// (GAS 예측 흐름에서 OnGiven 이후 ServerTryActivateAbility RPC가 재진입할 수 있으므로 crash 대신 early return)
+	if (CharacterCarriedWeaponMap.Contains(InWeaponTagToRegister))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[CombatComponent] RegisterSpawnedWeapon: %s is already registered — skipping"),
+			*InWeaponTagToRegister.ToString());
+		return;
+	}
 
-	// 유효하지 않은 무기 포인터 방지
-	check(InWeaponToRegister);
+	if (!ensure(InWeaponToRegister)) return;
 
 	// 태그와 무기를 맵에 추가
 	CharacterCarriedWeaponMap.Emplace(InWeaponTagToRegister, InWeaponToRegister);
@@ -85,6 +88,13 @@ ABasicWeapon* UCombatComponent::GetCharacterCarriedWeaponByTag(FGameplayTag InWe
 		}
 	}
 	return nullptr;
+}
+
+void UCombatComponent::ClearCarriedWeapons()
+{
+	CharacterCarriedWeaponMap.Reset();
+	CurrentEquippedWeaponTag = FGameplayTag::EmptyTag;
+	EquippedWeapon = nullptr;
 }
 
 ABasicWeapon* UCombatComponent::GetCharacterCurrentEquippedWeapon() const

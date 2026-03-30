@@ -16,7 +16,6 @@
 #include "Net/UnrealNetwork.h"
 #include "Framework/Panic_RoomGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Attribute/BasicAttributeSet.h"
 //GAS
 #include "AbilitySystemComponent.h"
 
@@ -91,18 +90,41 @@ void APanic_RoomCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	InputComp->BindAbilityInputAction(InputConfigDataAsset, this, &ThisClass::Input_AbilityInputPressed, &ThisClass::Input_AbilityInputReleased);
 }
 
+UAbilitySystemComponent* APanic_RoomCharacter::GetAbilitySystemComponent() const
+{
+	// ASC는 PlayerState가 소유. 캐시(PlayerState 멤버)가 유효하면 바로 반환하고,
+	// 아직 초기화 전이라면 GetPlayerState()를 통해 직접 조회한다.
+	if (PlayerState)
+	{
+		return PlayerState->GetAbilitySystemComponent();
+	}
+
+	if (ABasicPlayerState* PS = GetPlayerState<ABasicPlayerState>())
+	{
+		return PS->GetAbilitySystemComponent();
+	}
+
+	return nullptr;
+}
+
 void APanic_RoomCharacter::InitializeASC()
 {
-	// 이미 초기화 완료된 경우 스킵
-	if (PlayerState) return;
-
 	ABasicPlayerState* PS = Cast<ABasicPlayerState>(GetPlayerState());
 	if (!PS) return;
 
-	PlayerState = PS;
-
 	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
 	if (!ASC) return;
+
+	// AbilityActorInfo가 이미 이 캐릭터(AvatarActor)로 초기화되어 있으면 스킵.
+	// PlayerState 캐시 유무 대신 실제 초기화 여부를 확인하므로,
+	// 리스폰 후 새 캐릭터 인스턴스가 들어왔을 때도 정확하게 재초기화된다.
+	if (ASC->AbilityActorInfo.IsValid() && ASC->AbilityActorInfo->AvatarActor == this)
+	{
+		PlayerState = PS; // 캐시만 최신화
+		return;
+	}
+
+	PlayerState = PS;
 
 	// ASC에 OwnerActor(PlayerState)와 AvatarActor(이 캐릭터)를 알려줌
 	ASC->InitAbilityActorInfo(PS, this);
@@ -123,22 +145,18 @@ void APanic_RoomCharacter::PossessedBy(AController* NewController)
 	{
 		UAbilitySystemComponent* ASC = PlayerState->GetAbilitySystemComponent();
 
-		// 최초 스폰 시 어빌리티 부여
+		// 리스폰 시: 기존 어빌리티를 모두 제거하고 새 폰(AvatarActor)으로 재부여.
+		// SourceObject 갱신만 하면 어빌리티 상태가 오염될 수 있으므로
+		// ClearAllAbilities → 플래그 리셋 → SetGADefault 재호출 순서로 처리.
+		if (PlayerState->WasAbilitiesGranted())
+		{
+			ASC->ClearAllAbilities();
+			PlayerState->ResetAbilitiesGranted();
+			CombatComponent->ClearCarriedWeapons();
+		}
+
+		// 최초 스폰 및 리스폰 양쪽 모두 SetGADefault 호출로 능력 부여
 		PlayerState->SetGADefault(ASC);
-
-		// 리스폰 시 기존 어빌리티의 SourceObject를 새 폰으로 갱신
-		for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
-		{
-			if (Spec.SourceObject != this)
-			{
-				Spec.SourceObject = this;
-			}
-		}
-
-		if (ASC->GetActivatableAbilities().Num() > 0)
-		{
-			ASC->MarkAbilitySpecDirty(ASC->GetActivatableAbilities().Last(), true);
-		}
 	}
 
 }
@@ -258,97 +276,3 @@ void APanic_RoomCharacter::OnRep_IsDead()
 }
 
 // ── 디버그 전용 ────────────────────────────────────────────────
-void APanic_RoomCharacter::DebugDamage(float Amount)
-{
-	if (!HasAuthority()) return;
-
-	ABasicPlayerState* PS = Cast<ABasicPlayerState>(GetPlayerState());
-	if (!PS) return;
-
-	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-	if (!ASC) return;
-
-	UBasicAttributeSet* AttrSet = const_cast<UBasicAttributeSet*>(
-		Cast<UBasicAttributeSet>(PS->GetAttributeSet()));
-	if (!AttrSet) return;
-
-	// GAS 경로를 통한 데미지 적용 (Instant GE 동적 생성)
-	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-	Context.AddInstigator(this, this);
-
-	// UGameplayEffect CDO를 동적으로 생성하여 Damage Meta Attribute에 값 적용
-	UGameplayEffect* DamageEffect = NewObject<UGameplayEffect>(GetTransientPackage(), TEXT("DebugDamageEffect"));
-	DamageEffect->DurationPolicy = EGameplayEffectDurationType::Instant;
-
-	int32 Idx = DamageEffect->Modifiers.Num();
-	DamageEffect->Modifiers.SetNum(Idx + 1);
-	FGameplayModifierInfo& ModInfo = DamageEffect->Modifiers[Idx];
-	ModInfo.Attribute = UBasicAttributeSet::GetDamageAttribute();
-	ModInfo.ModifierOp = EGameplayModOp::Additive;
-	ModInfo.ModifierMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(Amount));
-
-	ASC->ApplyGameplayEffectToSelf(DamageEffect, 1.f, Context);
-
-	UE_LOG(LogTemp, Warning, TEXT("[Debug] %.0f 데미지 적용 → Health: %.0f / %.0f"),
-		Amount, AttrSet->GetHealth(), AttrSet->GetMaxHealth());
-}
-
-void APanic_RoomCharacter::DebugHealth()
-{
-	ABasicPlayerState* PS = Cast<ABasicPlayerState>(GetPlayerState());
-	if (!PS) return;
-
-	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-	const UBasicAttributeSet* AttrSet = Cast<UBasicAttributeSet>(PS->GetAttributeSet());
-
-	// ── 플레이어 정보 ──
-	UE_LOG(LogTemp, Warning, TEXT("========================================"));
-	UE_LOG(LogTemp, Warning, TEXT("[Debug] Player: %s | Pawn: %s | Server: %s"),
-		*PS->GetPlayerName(), *GetName(),
-		HasAuthority() ? TEXT("Y") : TEXT("N"));
-
-	// ── 체력 상태 ──
-	if (AttrSet)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Debug] Health: %.0f / %.0f | Dead: %s"),
-			AttrSet->GetHealth(), AttrSet->GetMaxHealth(),
-			bIsDead ? TEXT("Yes") : TEXT("No"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Debug] AttributeSet: NULL"));
-	}
-
-	// ── ASC 초기화 상태 ──
-	UE_LOG(LogTemp, Warning, TEXT("[Debug] PlayerState cached: %s | ASC: %s"),
-		PlayerState ? TEXT("Y") : TEXT("N"),
-		ASC ? TEXT("Y") : TEXT("N"));
-
-	// ── 보유 어빌리티 목록 ──
-	if (ASC)
-	{
-		const TArray<FGameplayAbilitySpec>& Abilities = ASC->GetActivatableAbilities();
-		UE_LOG(LogTemp, Warning, TEXT("[Debug] Abilities: %d 개"), Abilities.Num());
-
-		for (int32 i = 0; i < Abilities.Num(); ++i)
-		{
-			const FGameplayAbilitySpec& Spec = Abilities[i];
-			FString AbilityName = Spec.Ability ? Spec.Ability->GetClass()->GetName() : TEXT("NULL");
-			FString InputTag = Spec.DynamicAbilityTags.ToStringSimple();
-			FString SourceName = Spec.SourceObject.IsValid()
-				? Spec.SourceObject->GetName() : TEXT("NULL");
-
-			UE_LOG(LogTemp, Warning, TEXT("[Debug]   [%d] %s | InputTag: %s | Active: %s | Source: %s"),
-				i, *AbilityName,
-				InputTag.IsEmpty() ? TEXT("None") : *InputTag,
-				Spec.IsActive() ? TEXT("Y") : TEXT("N"),
-				*SourceName);
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Debug] ASC: NULL — 어빌리티 조회 불가"));
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("========================================"));
-}

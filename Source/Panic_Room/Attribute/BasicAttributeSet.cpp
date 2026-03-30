@@ -58,6 +58,12 @@ void UBasicAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 			// Damage Meta Attribute 초기화
 			SetDamage(0.f);
 
+			const FString VictimName = GetOwningActor() ? GetOwningActor()->GetName() : TEXT("Unknown");
+			const FString InstigatorName = Data.EffectSpec.GetContext().GetInstigator()
+				? Data.EffectSpec.GetContext().GetInstigator()->GetName() : TEXT("Unknown");
+			UE_LOG(LogTemp, Warning, TEXT("[Hit] %s ← %s | Damage: %.0f | Health: %.0f / %.0f"),
+				*VictimName, *InstigatorName, DamageValue, NewHealth, GetMaxHealth());
+
 			// 사망 판정: Health가 0이 되면 GA_Death를 트리거하는 이벤트 전송
 			// GA_Death(ReactiveAbility)가 이 이벤트를 수신하여 HandleDeath를 호출한다
 			if (NewHealth <= 0.f)

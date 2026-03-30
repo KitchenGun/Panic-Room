@@ -119,6 +119,10 @@ void ABasicWeapon::Fire()
 			// ASC 없거나 DamageEffectClass 미설정이면 스킵
 			if (!bHasASC || !DamageEffectClass) continue;
 
+			// GE 적용은 반드시 서버(Authority)에서만 수행.
+			// 클라이언트에서 Fire()가 호출된 경우(로컬 예측 사운드/애니메이션 등) 데미지 경로는 건너뜀.
+			if (!Character->HasAuthority()) break;
+
 			// 공격자(소유 캐릭터)의 ASC는 PlayerState에 존재
 			UAbilitySystemComponent* SourceASC = nullptr;
 			if (ABasicPlayerState* PS = Character->GetPlayerState<ABasicPlayerState>())

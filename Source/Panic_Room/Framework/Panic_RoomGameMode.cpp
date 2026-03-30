@@ -4,6 +4,7 @@
 #include "Panic_RoomCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Character/BasicPlayerState.h"
+#include "Attribute/BasicAttributeSet.h"
 #include "GameFramework/PlayerStart.h"
 
 APanic_RoomGameMode::APanic_RoomGameMode()
@@ -49,5 +50,11 @@ void APanic_RoomGameMode::RestartPlayer(AController* NewPlayer)
 	if (ABasicPlayerState* PS = NewPlayer->GetPlayerState<ABasicPlayerState>())
 	{
 		PS->ResetAttributesForRespawn();
+
+		const UBasicAttributeSet* AttrSet = PS->GetAttributeSet();
+		UE_LOG(LogTemp, Warning, TEXT("[Respawn] %s | Health: %.0f / %.0f"),
+			*PS->GetPlayerName(),
+			AttrSet ? AttrSet->GetHealth() : 0.f,
+			AttrSet ? AttrSet->GetMaxHealth() : 0.f);
 	}
 }
